@@ -1,0 +1,24 @@
+一、用 Eclipse 直接 run 可以运行，但是 Export 出 jar 文件以后双击却没有反应怀疑是不是 Eclipse 的导出功能坏掉了，于是用了 flat.jar 等工具重新打包，仍然不行，并且走了很多弯路以后，终于 Google 到了问题的所在
+
+原因：win7/win8 的 jar 文件默认关联的程序是 java.exe 而不是 javaw.exe，在右键的打开方式里面这两个程序也分辨不出来，都显示的是：Java (TM) Platform SE binary
+
+解决方法：右击 jar 包 -> 打开方式 -> 选择 jdk 目录下 bin 文件夹中的 javaw.exe
+
+二、经过一还是失败的话，输入"regedit"打开注册表，找到“HKEY_CLASSES_ROOT\Applications\javaw.exe\shell\open\command”，修改值为："X:\jdk\bin\javaw.exe" -jar "%1"( 即只需要在原来的 %1 前面添加 -jar )
+
+三、无高级开发工具正确打jar包
+
+1、创建一个1.txt，内容："Main-Class: pintu.Main回车"
+2、DOS命令行命令："jar -cvfm xxx.jar 1.txt 包名1 包名2 ..."
+
+命令的本质：
+1、创建一个"MANIFEST.MF"文件，将"MANIFEST.MF"放到一个新建的名为："META-INF"的文件夹里
+用记事本打开"MANIFEST.MF"可以看到：
+Manifest-Version: 1.0
+Created-By: 1.8.0_20 (Oracle Corporation)
+Main-Class: 包名.main函数所在类的类名
+
+2、将 META-INF、包1、包2... 压缩一下，生成的压缩文件后缀名为jar（用压缩软件是可以打开jar文件的）
+
+
+PS：少回车不报IO异常，但要是主函数所在类没有写进jar的META-INF\MANIFEST.MF文件中，双击也运行不起来

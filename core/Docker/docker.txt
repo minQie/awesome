@@ -1,0 +1,26 @@
+========安装
+https://hub.docker.com/editions/community/docker-ce-desktop-windows/
+在win10上安装docker，初始双击运行安装包，提示：
+Docker Desktop requires Windows 10 Pro or Enterprise version 15063 to run.
+
+百度一下，安装条件：
+1、开启虚拟化，当初安卓开发已经开启了（任务管理器 -> 性能）
+2、“win”+“r”->“msinfo32”,查看版本（自己的系统版本高于这个值）
+3、Hyper-V支持，这是个软件，家庭版没有，“控制面板”->“启用或关闭 Windows 功能”->“Hyper-V”（自己的系统是家庭版默认没有）
+	参照这个“https://blog.csdn.net/weixin_37695006/article/details/91589895”：就是运行当前目录下的“Hyper-V.cmd”
+4、cpu的指令集中得有“VT-x”或者“VT”（通过“CPU-Z”查看，“i7 7700HQ”是有“VT-x”的）
+
+“2”的信息面板虚拟化安全没有开启？并且有“Hyper-V”的相关信息？
+
+最后：上面的4点要求都达到后，还是提示相同的内容，因为只能在“Pro”或者“Enterprise”版本的Win10上安装
+解决：修改注册表信息，让系统以为自己是专业版
+修改“HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\CurrentVersion”的“EditionID”
+“CoreCountrySpecific”->“Professional”
+
+5、docker安装好后，会还原你修改的系统版本配置，再次修改注册表，忽略还弹出的框就好了，之后一切正常
+
+==安装图形化工具Kitematic
+右键右下角图标 -> Kitematic -> 会跳出下载（下载好是一个解压就能够运行的）
+
+==修改默认的镜像目录（默认C盘）
+右键右下角图标 -> Settings -> Advanced（你就能看到了）

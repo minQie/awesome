@@ -1,0 +1,82 @@
+首先明确概念，同步是针对多线程提出的概念，所以核心是线程，不要因为java对象，以及对象的方法之类的导致核心的转移，同时线程是用于执行代码才创建的，所以我们要站在线程和代码的角度来分析这个问题
+
+1、同步的实现就好像为一些代码划分了只有一扇门的房间，同步就是房间的锁，相同锁的代码会被放到同一个房间
+2、每把锁只有一把钥匙，最初钥匙是挂在门上的也就是锁的旁边
+3、线程想执行房间里代码就必须先用钥匙打开门，再将钥匙带入房间并挂在门的内侧上，再关上门。也要求房间里最后一个执行完代码的线程，从房间出来的时候将钥匙挂回门外
+4、那么有一个线程开始执行代码了，拿钥匙开门，进门，将钥匙挂在门内，先从当前房间里有的代码，根据自己的任务选择并复印一份自己需要做的，就开始工作了；而后又有一个线程想要进入房间执行里面的代码，但是门是锁着的，这个线程便只有等房间里的线程执行完，将钥匙归还的时候
+
+那么在上述的情境下，基于某一个特定房间，
+房间里的线程执行wait方法，就好比先把钥匙先挂回门外，再回到房间，并吃了颗安眠药（药效永久）
+房间里的线程执行notify方法，就好比帮当前房间里第一个吃了安眠药的线程把药吐出来
+房间里的线程执行notifyAll方法，就好比帮当前房间里所有吃了安眠药的线程把药吐出来，吐出安眠药的线程继续执行自己的代码
+
+这里仍需强调若不是基于同一个房间，大家在各自的房间各干各的，那么上锁门的概念也就形同虚设，所以实际写代码的时候wait方法和notify方法都是在同步方法或者同步代码块里，要基于锁的，也就是wait和notify方法都是要在同步/锁(synchronized代码块或者同步方法)下调用，即“锁.wait()”，“锁.noitify()”，否则毫无意义
+
+ps1：wait，notify，notifyAll，这类方法虽然从功能上说是操作线程的，但是是基于各种锁调用，锁可以使任意对象，所以java将这些方法定义在了Object中
+ps2：控制一个线程结束的方法就一个：让run方法结束！
+ps3：同步非静态方法中的锁就是本类对象，同步静态方法的锁是本类的字节码对象
+
+一、正确使两个线程互斥顺序执行各自要执行的代码
+synchronized(锁) {
+	if(flag)
+		锁.wait();
+	线程1要执行的代码;
+	flag =true;
+	锁.notify();
+}
+synchronized(锁) {
+	if(!flag)
+		锁.wait();
+	线程2要执行的代码;
+	flag = false;
+	锁.notify();
+}
+
+二、A线程组，B线程组中的线程互斥顺序执行各自要执行的代码
+方案一、synchronized
+synchronized(锁) {
+	while(flag)
+		锁.wait();// wait和notify等操作都会抛出异常
+	线程组A中线程要执行的代码;
+	flag = true;
+	锁A.notifyAll();// 不好在与，这个连B线程组中的线程也会唤醒
+}
+synchronized(锁) {
+	while(!flag)
+		锁.wait();
+	线程组B中线程要执行的代码;
+	flag = false;
+	锁.notifyAll();
+}
+
+方案二、Lock
+Lock lock = new ReentrantLock();
+Condition conditionA = lock.newCondition();
+Condition conditionB = lock.newCondition();
+
+// --------------
+lock.lock();
+try {
+	while(flag)
+		conditionA.await();
+	线程组B中线程要执行的代码;
+	flag = true;
+	conditionB.signal();
+} catch(InterruptedException e) {
+
+} finally {
+	lock.unlock();
+}
+// --------------
+lock.lock();
+try {
+	while(!flag)
+		conditionB.await();
+	线程组B中线程要执行的代码;
+	flag = false;
+	conditionA.signal();
+} catch(InterruptedException e) {
+
+} finally {
+	lock.unlock();
+}

@@ -1,0 +1,30 @@
+说明
+1、命令前面添加“setsid”，代表后台模式启动
+2、“-log”指定日志输出文件（前台运行指定这个参数，控制台就不在输出日志了）
+
+
+本地端口服务，通过http、https都能访问成功：
+1、客户端和服务端使用自签证书编译生成
+
+2、服务端指定阿里证书启动（客户端的“trust_host_root_certs”置为“true”，否者失败现象1）
+ngrokd -tlsKey=/opt/cert/ngrok_wangmincong_xyz/ssl.key -tlsCrt=/opt/cert/ngrok_wangmincong_xyz/ssl.pem -domain=ngrok.wangmincong.xyz -httpAddr=127.0.0.1:80 -httpsAddr=127.0.0.1:443 -tunnelAddr=:4443
+
+2、服务端指定自签生成的证书启动（客户端的“trust_host_root_certs”置为“false”，否者失败现象1）
+ngrokd -tlsKey="/usr/ngrok/ngrok/assets/server/tls/snakeoil.key" -tlsCrt="/usr/ngrok/ngrok/assets/server/tls/snakeoil.crt"  -domain=ngrok.wangmincong.xyz -httpAddr=127.0.0.1:80 -httpsAddr=127.0.0.1:443 -tunnelAddr=:4443
+
+失败现象：
+1、“false”客户端就一直“reconnecting”，服务端提示“ Failed to read message: remote error: tls: bad certificate”）
+2、客户端闪退
+
+总结：
+虽说有nginx了，ngrok只要监听http的本地80端口，但是https的端口置空“-httpsAddr=”会根据cfg配置文件的“trust_host_root_certs”导致客户端连服务端报错（同上）闪退（同上“成功连接”->“闪退”），所以，尽管nginx将请求都转发到ngrok的http的80端口，https的配置端口可以任意指定一个，就是不能为空
+
+疑问：
+1、老大说，docker环境下他就开放了443端口和4443端口？
+2、客户端的配置参数“trust_host_root_certs”的作用？
+3、为什么最开始突然就闪退了
+4、为什么通过脚本运行下面的“标准后台启动命令就失败”
+
+
+标准后台启动命令：
+setsid ngrokd -tlsKey=/opt/cert/ngrok_wangmincong_xyz/ssl.key -tlsCrt=/opt/cert/ngrok_wangmincong_xyz/ssl.pem -domain=ngrok.wangmincong.xyz -httpAddr=127.0.0.1:80 -httpsAddr=127.0.0.1:443 -tunnelAddr=:4443 -log="/usr/ngrok/log/ngrok.log"
