@@ -1,0 +1,1 @@
+用于学习的，从Ali Ecs “/etc/rc.d/init.d”目录下，Jenkins开机自启的脚本（默认文件名“jenkins”）

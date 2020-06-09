@@ -4,15 +4,83 @@
 
 ## 概念
 
-数据定义语言DDL（Data Definition Language）
+### 分层
 
-数据操纵语言DML（Data Manipulation Language）
+- 连接层
 
-数据查询语言DQL（Data Query Language）
+  最上层是一些客户端和连接服务。主要完成一些类似与连接处理、授权认证、及相关的安全方案。在该层上引入线程池的概念，为通过认证安全接入的客户端提供线程。在该层上引入了线程池的概念，为通过认证安全接入的客户端提供线程。同样在该层上可以实现基于SSL的安全链接。服务器也会为安全接入的每个客户端验证它所具有的操作权限
 
-数据控制语言DCL（Data Control Language）
+- 服务层
 
-## 安装（Windows）、服务相关
+  第二层服务层，主要完成大部分的核心服务功能，包括查询解析、分析、优化、缓存、以及所有的内置函数，所有跨存储的功能也都在这一层实现，包括触发器、存储过程、试图等
+
+- 引擎层
+
+  第三层存储引擎，存储引擎真正的负责了MySQL中数据的存储和提取，服务器通过API与存储引擎进行通信。不同的存储引擎具有的功能不同，这样我们可以根据自己的实际需要进行选取
+
+- 存储层
+
+  第四层为数据存储层，主要是将数据存储在运行于该设备的文件系统之上，并完成与存储引擎的交互
+
+### SQL类型
+
+​	数据定义语言DDL（Data Definition Language）
+
+​	数据操纵语言DML（Data Manipulation Language）
+
+​	数据查询语言DQL（Data Query Language）
+
+​	数据控制语言DCL（Data Control Language）
+
+### 存储引擎
+
+- 查看支持的
+
+  SHOW ENGINES;
+
+- 查看默认的
+
+  SHOW VARIABLES LIKE 'storage_engine';
+
+- 查看表的
+
+  show create table 'tablename';
+  show table status like 'tablename';
+  show table status from database where name="tablename";
+
+- 修改表的
+
+  ALTER TABLE t ENGINE = InnoDB;
+
+- 修改默认的
+
+  SET default_storage_engine=NDBCLUSTER;（还可以通过修改配置文件）
+
+### 文件存储
+
+- 查看数据文件目录
+
+  SHOW VARIABLES LIKE 'data%'
+
+- `.frm` 
+
+  与表相关的元数据信息都存放在frm文件，包括表结构的定义信息等
+
+- `.ibd` 或 `.ibdata` 
+
+  ​	这两种文件都是存放 InnoDB 数据的文件，之所以有两种文件形式存放 InnoDB 的数据，是因为 InnoDB 的数据存储方式能够通过配置来决定是使用**共享表空间**存放存储数据，还是用**独享表空间**存放存储数据。
+
+  ​	独享表空间存储方式使用`.ibd`文件，并且每个表一个`.ibd`文件 共享表空间存储方式使用`.ibdata`文件，所有表共同使用一个`.ibdata`文件（或多个，可自己配置）
+
+### 索引
+
+1. InnoDB 支持事务，MyISAM 不支持事务。这是 MySQL 将默认存储引擎从 MyISAM 变成 InnoDB 的重要原因之一
+2. InnoDB 支持外键，而 MyISAM 不支持。对一个包含外键的 InnoDB 表转为 MYISAM 会失败
+3. InnoDB 是聚簇索引，MyISAM 是非聚簇索引。聚簇索引的文件存放在主键索引的叶子节点上，因此 InnoDB  必须要有主键，通过主键索引效率很高。但是辅助索引需要两次查询，先查询到主键，然后再通过主键查询到数据。因此，主键不应该过大，因为主键太大，其他索引也都会很大。而 MyISAM 是非聚集索引，数据文件是分离的，索引保存的是数据文件的指针。主键索引和辅助索引是独立的
+4. InnoDB 不保存表的具体行数，执行`select count(*) from table` 时需要全表扫描。而 MyISAM 用一个变量保存了整个表的行数，执行上述语句时只需要读出该变量即可，速度很快
+5. InnoDB 最小的锁粒度是行锁，MyISAM 最小的锁粒度是表锁。一个更新语句会锁住整张表，导致其他查询和更新都会被阻塞，因此并发访问受限。这也是 MySQL 将默认存储引擎从 MyISAM 变成 InnoDB 的重要原因之一
+
+## 安装（Windows）
 
 ### 安装
 
@@ -319,7 +387,7 @@
 - 改（全改 - 除列名）
 
   ```MySQL
-  ALTER TABLE `表名` MODIFY <COLUMN> `列名` VARCHAR(10) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_general_ci' DEFAULT 'XXX' COMMENT 'XXX'
+  ALTER TABLE `表名` MODIFY <COLUMN> `列名` VARCHAR(10) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' DEFAULT 'XXX' COMMENT 'XXX'
   ```
 
 - 改（全改 - 除列名、字符集）
@@ -517,6 +585,10 @@
 
   整型的每一种都分有无符号（unsigned）和有符号（signed）两种类型（float和double总是带符号的），在默认情况下声明的整型变量都是有符号的类型（char有点特别），如果需声明无符号类型的话就需要在类型前加上unsigned。无符号版本和有符号版本的区别就是无符号类型能保存2倍于有符号类型的正整数数据，比如16位系统中一个int能存储的数据的范围为-32768~32767，而unsigned能存储的数据范围则是0~65535。由于在计算机中,整数是以补码形式存放的。根据最高位的不同，如果是1,有符号数的话就是负数；如果是无符号数,则都解释为正数。另外，unsigned若省略后一个关键字，大多数编译器都会认为是`unsigned int`
 
+- 转编码（放在WHERE条件的等号后边，可以避免因编码不同的隐式转换带来的索引失效问题）
+
+  CONVERT('xxx', USING utf8mb4)
+
 ### DATE_FORMAT
 
 - `DATE_FORMAT(date, '%Y-%m-%d %T')`（相当于java的yyyy-MM-dd HH:mm:ss）
@@ -645,7 +717,7 @@
 
 ### 编码排序
 
-### 字符集（公众号文章）
+### 字符集
 
 **utf8mb4_unicode_ci 和 utf8mb4_general_ci**
 
@@ -665,7 +737,122 @@
 
   现在基本没有理由继续使用utf8mb4_general_ci了，因为其带来的性能差异很小，远不如更好的数据设计，比如使用索引等等。
 
+### 统计数据总行数
+
+- 在 MyISAM 存储引擎中，把表的总行数存储在磁盘上，当执行 select count(*) from t 时，直接返回总数据。
+- 在 InnoDB 存储引擎中，跟 MyISAM 不一样，没有将总行数存储在磁盘上，当执行 select count(*) from t 时，会先把数据读出来，一行一行的累加，最后返回总数量。
+
+- InnoDB 中 count(*) 语句是在执行的时候，全表扫描统计总数量，所以当数据越来越大时，语句就越来越耗时了，为什么 InnoDB 引擎不像  MyISAM 引擎一样，将总行数存储到磁盘上？这跟 InnoDB 的事务特性有关，由于多版本并发控制（MVCC）的原因，InnoDB  表“应该返回多少行”也是不确定的
+
+### 分布式主键ID生成策略
+
+1. UUID
+
+   **优点**
+
+   - 生成足够简单，本地生成无网络消耗，具有唯一性
+
+   **缺点**
+
+   - 无序的字符串，不具备趋势自增特性
+   - 没有具体的业务含义
+   - 长度过长16 字节128位，36位长度的字符串，存储以及查询对MySQL的性能消耗较大，MySQL官方明确建议主键要尽量越短越好，作为数据库主键 `UUID` 的无序性会导致数据位置频繁变动，严重影响性能。
+
+2. 数据库自增ID
+
+   **优点**
+
+   - 实现简单，ID单调自增，数值类型查询速度快
+
+   **缺点**
+
+   - DB单点存在宕机风险，无法扛住高并发场景
+
+3. 数据库自增ID（集群模式）
+
+   ```MySQL
+   -- 数据库1
+   set @@auto_increment_offset = 1;     -- 起始值
+   set @@auto_increment_increment = 2;  -- 步长
+   -- 数据库2
+   set @@auto_increment_offset = 2;     -- 起始值
+   set @@auto_increment_increment = 2;  -- 步长
+   ```
+
+   **优点**
+
+   - 解决DB单点问题
+
+   **缺点**
+
+   - 不利于后续扩容，而且实际上单个数据库自身压力还是大，依旧无法满足高并发场景
+
+4. 数据库的号段模式
+
+   - 号段模式是当下分布式ID生成器的主流实现方式之一，号段模式可以理解为从数据库批量的获取自增ID，每次从数据库取出一个号段范围，例如 (1,1000] 代表1000个ID，具体的业务服务将本号段，生成1~1000的自增ID并加载到内存
+
+   - 号段表核心字段
+
+     biz_type ：代表不同业务类型
+
+     max_id ：当前最大的可用id
+
+     step ：代表号段的长度
+
+     version ：是一个乐观锁，每次都更新version，保证并发时数据的正确性
+
+   - 当一批id用完了
+
+     ```MySQL
+     update id_generator set max_id = #{max_id+step}, version = version + 1 where version = # {version} and biz_type = XXX
+     ```
+
+   - 由于多业务端可能同时操作，所以采用版本号`version`乐观锁方式更新，这种`分布式ID`生成方式不强依赖于数据库，不会频繁的访问数据库，对数据库的压力小很多
+
+5. Redis
+
+   - 利用其`incr`命令实现ID的原子性自增
+
+   - 注意持久化
+
+     ​	`RDB`会定时打一个快照进行持久化，假如连续自增但`redis`没及时持久化，而这会Redis挂掉了，重启Redis后会出现ID重复的情况。
+
+     ​	`AOF`会对每条写命令进行持久化，即使`Redis`挂掉了也不会出现ID重复的情况，但由于incr命令的特殊性，会导致`Redis`重启恢复的数据时间过长。
+
+6. Snowflake
+
+   - twitter公司内部分布式项目采用的ID生成算法，开源后广受国内大厂的好评，在该算法影响下各大公司相继开发出各具特色的分布式生成器
+
+   - `Snowflake`生成的是Long类型的ID，一个Long类型占8个字节，每个字节占8比特，也就是说一个Long类型占64个比特
+
+   - Snowflake ID组成结构：`正数位`（占1比特）+ `时间戳`（占41比特）+ `机器ID`（占5比特）+ `数据中心`（占5比特）+ `自增值`（占12比特），总共64比特组成的一个Long类型
+     - 第一个bit位（1bit）：Java中long的最高位是符号位代表正负，正数是0，负数是1，一般生成ID都为正数，所以默认为0
+     - 时间戳部分（41bit）：毫秒级的时间，不建议存当前时间戳，而是用（当前时间戳 - 固定开始时间戳）的差值，可以使产生的ID从更小的值开始；41位的时间戳可以使用69年，(1L << 41) / (1000L * 60 * 60 * 24 * 365) = 69年
+     - 工作机器id（10bit）：也被叫做`workId`，这个可以灵活配置，机房或者机器号组合都可以
+     - 序列号部分（12bit）：自增值支持同一毫秒内同一个节点可以生成4096个ID
+   - 具体实现：https://github.com/beyondfengyu/SnowFlake
+
+7. Uid-generator - 百度
+
+   - 具体实现：https://github.com/baidu/uid-generator/blob/master/README.zh_cn.md
+
+8. Leaf - 美团
+
+   - 同时支持号段模式和雪花模式
+
+   - 具体实现：https://github.com/Meituan-Dianping/Leaf
+
+9. Tinyid - 滴滴
+
+   - 具体实现：https://github.com/didi/tinyid
+
+[微信公众号]: https://mp.weixin.qq.com/s?__biz=MzU5NTgzMDYyMA==&amp;mid=2247488761&amp;idx=1&amp;sn=4909fe1220c6d3cdf762e09766561905&amp;chksm=fe6aa6cac91d2fdcb6a2d61aa0ea8927d3348fb1b29c9356502ec343a8fcaab370a015791582&amp;scene=126&amp;sessionid=1591504903&amp;key=55850329b0c39edb7b515cbb9a50a69bfaf44cacfa71990fad565f4e35dec28d696581116eb0a79974a4fbc1b40d85349f8362f928dc365b8ab6fa8d0f5526488dee15ef8a0b8578fc26dfb5adbde067&amp;ascene=1&amp;uin=MjQzMjg2NTAzMA%3D%3D&amp;devicetype=Windows+10+x64&amp;version=62090070&amp;lang=zh_CN&amp;exportkey=AVO8s81eVVWpDJbHZ5x7YDs%3D&amp;pass_ticket=tSWfkndbTMJy7UxUdd2J66UIpvpKQOW8oIRIcNYmXmcBRwagb%2BJTdjMmaw5wKjWp	"Java 专栏"
+
+
+
 ## 优化
+
+### 通用方法
 
 - 1.**查看优化器状态**
 
@@ -698,6 +885,43 @@
 - **注意**
 
   如果不设置优化器最大容量的话，可能导致优化器返回的结果不全
+
+### 索引
+
+#### 索引失效
+
+有为字段设置索引，查询中涉及到相关的查询条件或者排序，可是索引失效（查询计划显示没有用到索引 - 全表扫描）的场景
+
+1. where条件的等号左边不要使用运算、函数、以及注意默认的字段类型隐式转换问题（比如编码，且默认行为是将 UTF8 转成 UTF8MB4）
+2. 复合索引。注意查询条件字段的顺序、排序条件的字段的规则得相同（要不都升序、要不都降序）
+
+#### 索引提示
+
+当MySQL确实因为某些原因，采用了错误的执行计划（没有使用预期的索引），可以使用`USE INDEX(index1, index2, ...)`，让MySQL去使用指定的索引进行查询。不过注意，虽然这是一个点，但实际一般不会用，一个是这样的SQL语句可维护性不好，另一个是一般MySQL很少会选错执行计划，如果真的选错了，也最好是采用提示的做法（相同目的，不同的SQL）
+
+**其他**
+
+​	IGNORE INDEX(index1, index2, ...)
+
+​	FORCE INDEX(index1, index2, ...)
+
+### GROUP BY
+
+如果GROUP BY的字段上如果有索引，因为索引默认有序，可以避免排序行为。所以如果你的分组对排序没有要求，且字段没有对应索引，一定要显示指定不排序，例：`GROUP BY xxx ORDER BY NULL`
+
+### JOIN
+
+1. 代替子查询
+
+2. 阿里规范规定
+
+   超过三个表禁止join
+
+   需要join的字段，数据类型保持绝对一致
+
+   多表关联查询时，保证被关联的字段需要有索引
+
+   即使双表join也要注意表索引、SQL性能
 
 ## 开发
 
