@@ -1,4 +1,4 @@
-# Java命令
+#  Java命令
 
 1. **运行项目**
 
@@ -59,7 +59,43 @@
 - 配置式1：在pom.xml中的properties标签下添加`<skipTests>true</skipTests>`
   （但会编译测试类，在target/test-classes目录下生成相应的class）
 - 配置式2：在pom.xml中的properties标签下添加`<maven.test.skip>true</maven.test.skip>`
-
 - 参数式1：`mvn clean package -DskipTests`
   （但会编译测试类，在target/test-classes目录下生成相应的class）
 - 参数式2：`mvn clean package -Dmaven.test.skip=true`
+
+# 增量更新
+
+## 概念
+
+1. 通常，一个工程项目架构确定后，引入的jar包基本上不会变，改变的大部分是业务逻辑；
+
+2. 后面如果需要变更业务逻辑，只需要轻量地编译工程，大大提高项目部署的效率
+
+## 导出项目的lib
+
+```
+mvn dependency:copy-dependencies -DoutputDirectory=/xxx/.../lib -DincludeScope=runtime
+```
+
+
+
+## 构建出不含lib的jar包
+
+在spring-boot-maven-plugin标签下添加如下配置
+
+```
+<configuration>
+    <includes>
+        <include>
+            <groupId>nothing</groupId>
+            <artifactId>nothing</artifactId>
+        </include>
+    </indludes>
+</configuration>
+```
+
+运行jar包需要的参数
+
+```
+-Dloader.path=/xxx/.../lib
+```

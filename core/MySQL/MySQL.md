@@ -891,31 +891,59 @@
 
 ## 优化
 
+### 命令
+
+```mysql
+SHOW STATUS LIKE 'innodb_row_lock%'
+```
+
+将得到如下结果
+
+| Variable_name                 | 说明                |
+| ----------------------------- | ------------------- |
+| Innodb_row_lock_current_waits | 有多少sql正在等待锁 |
+| Innodb_row_lock_time          | 总共锁住的时间      |
+| Innodb_row_lock_time_avg      | 平均锁住的时间      |
+| Innodb_row_lock_time_max      | 最大锁住的时间      |
+| Innodb_row_lock_waits         | 锁住的次数          |
+
 ### 通用方法
 
 - 1.**查看优化器状态**
 
+  ```mysql
   show variables like 'optimizer_trace';
+  ```
 
 - 2.**会话级别临时开启**
 
+  ```mysql
   set session optimizer_trace="endable=on", end_marks_in_json=on;
+  ```
 
 - 3.**设置优化器追踪的内存大小**
 
+  ```mysql
   set OPTIMIZER_TRACE_MAX_MEM_SIZE=1000000;
+  ```
 
 - 4.**执行自己的sql**
 
+  ```mysql
   SELECT * FROM XXX WHERE XXX = XXX
+  ```
 
 - 5.**Information_schema.optimizer_trace表**
 
+  ```mysql
   SELECT trace FROM information_schema.OPTIMIZER_TRACE;
+  ```
 
 - 6.**导入到一个命名为xx.trace的文件，然后用JSON阅读器来查看**（如果没有控制台权限，或直接交由运维，让他把该trace文件，输出给你就行了）
 
+  ```mysql
   SELECT TARCE INTO DUMPFILE "E:\\test.trace" FROM INFORMATION_SCHEMA.OPTIMIZER_TRACE;
+  ```
 
 - 7.查看文件
 
@@ -927,7 +955,7 @@
 
 ### 索引
 
-#### 索引失效
+#### 索引失效（待补充所有的情况）
 
 有为字段设置索引，查询中涉及到相关的查询条件或者排序，可是索引失效（查询计划显示没有用到索引 - 全表扫描）的场景
 
