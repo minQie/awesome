@@ -439,25 +439,23 @@
 - 增
 
   ```MySQL
-  ALTER TABLE `表名` ADD `列名` VARCHAR(10) NOT NULL UNIQUE DEFAULT 'XXX' COMMENT 'XXX';
+  ALTER TABLE `表名` ADD <COLUMN> `列名` VARCHAR(10) NOT NULL UNIQUE DEFAULT 'XXX' COMMENT 'XXX' <AFTER `列名`> | <FIRST>;
   ```
 
-- 改（全改 - 除字符集）
+- 改（全改）
 
   ```MySQL
-  ALTER TABLE `表名` CHANGE <COLUMN> `旧列名` `新列名` TINYINT(1) DEFAULT 1 COMMENT 'XXX';
+  ALTER TABLE `表名` CHANGE <COLUMN> `旧列名` `新列名` VARCHAR(10) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' DEFAULT 'XXX' COMMENT 'XXX' <AFTER `列名`> | <FIRST>;
   ```
 
 - 改（全改 - 除列名）
 
   ```MySQL
-  ALTER TABLE `表名` MODIFY <COLUMN> `列名` VARCHAR(10) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' DEFAULT 'XXX' COMMENT 'XXX'
+  ALTER TABLE `表名` MODIFY <COLUMN> `列名` VARCHAR(10) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' DEFAULT 'XXX' COMMENT 'XXX' <AFTER `列名`> | <FIRST>;
   ```
 
-- 改（全改 - 除列名、字符集）
-
   ```MySQL
-  ALTER TABLE `表名` MODIFY <COLUMN> `列名` VARCHAR(10) UNIQUE NOT NULL DEFAULT 'XXX' COMMENT 'XXX';
+  ALTER TABLE `表名` MODIFY <COLUMN> `列名` VARCHAR(10) UNIQUE NOT NULL DEFAULT 'XXX' COMMENT 'XXX' <AFTER `列名`> | <FIRST>;
   ```
 
 - 改（默认值）
@@ -466,10 +464,16 @@
   ALTER TABLE `表名` ALTER <COLUMN> `列名` SET DEFAULT 'xxx';
   ```
 
+- 改（删除默认值）
+
+  ```mysql
+  ALTER TABLE `表名` ALTER <COLUMN> `列名` DROP DEFAULT;
+  ```
+  
 - 删
 
   ```MySQL
-  ALTER TABLE `表名` DROP `列名`;
+  ALTER TABLE `表名` DROP <COLUMN> `列名`;
   ```
 
 ### 数据行

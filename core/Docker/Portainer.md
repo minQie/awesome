@@ -28,7 +28,7 @@ docker run --name portainer \
 -p 8999:9000 \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v portainer_data:/data \
--d  portainer/portainer
+-d portainer/portainer
 ```
 
 上面这个是什么操作，创建一个数据卷？原因见下边
@@ -58,8 +58,4 @@ docker run --name portainer \
 3. 既然可以选择`Local`，那意思是还可以连接其他服务器的Docker服务咯
 
    当然，点击菜单项的`Endpoints`，这体现了Portainer优秀且理所当然的设计
-
-## 其他
-
-
 
