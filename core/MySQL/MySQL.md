@@ -22,15 +22,23 @@
 
   第四层为数据存储层，主要是将数据存储在运行于该设备的文件系统之上，并完成与存储引擎的交互
 
-### SQL类型
+### SQL
 
-​	数据定义语言DDL（Data Definition Language）
+结构化查询语言(Structured Query Language)，是一种特殊目的的编程语言，是一种数据库查询和程序设计语言，用于存取数据以及查询、更新和管理关系数据库系统；同时也是数据库脚本文件的扩展名。
 
-​	数据操纵语言DML（Data Manipulation Language）
+- 数据定义语言DDL（Data Definition Language）
 
-​	数据查询语言DQL（Data Query Language）
+  在数据库中创建新表或删除表；为表加入索引等
 
-​	数据控制语言DCL（Data Control Language）
+- 数据操纵语言DML（Data Manipulation Language）
+
+  INSERT、UPDATE、DELETE。也称动作查询语言
+
+- 数据查询语言DQL（Data Query Language）
+
+- 数据控制语言DCL（Data Control Language）
+
+  GRANT
 
 ### 存储引擎
 
@@ -297,7 +305,7 @@
 - 改编码
 
   ```MySQL
-  ALTER DATABASE `数据库名` CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'
+  ALTER DATABASE `数据库名` CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci';
   ```
 
 - 查所有数据库
@@ -366,6 +374,12 @@
     CONSTRAINT uq_attachment_type_name UNIQUE (name),
     CONSTRAINT pk_attachment_type PRIMARY KEY (id)
   ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8 COLLATE = utf8_general_ci COMMENT = '附件类型表';
+  ```
+
+- 删除
+
+  ```mysql
+  DROP TABLE `表名`;
   ```
 
 - 普通索引
@@ -549,7 +563,7 @@
 
 - 读未提交（read-uncommitted）：最低级别，只能保证持久性
 - 读已提交（read-committed）：
-- 可重复读（repeaTABLE-read）：
+- 可重复读（repeatable-read）：
 - 串行化（serializable）：最高级别，事务与事务完全串行化，毫无并发可言，性能极低
 
 | 事务隔离级别                 | 脏读 | 不可重复读 | 幻读 |
@@ -748,9 +762,19 @@
 
 ### 其他函数
 
-**CURRENT_TIMESTAMP**
+**日期+时间**
 
-返回当前的时间戳，可以作为时间类型的字段设置默认值
+​	SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP();
+
+​	PS：CURRENT_TIMESTAMP 可以作为时间类型的字段设置默认值
+
+**日期**
+
+​	SELECT CURDATE(), CURRENT_DATE(), CURRENT_DATE;
+
+**时间**
+
+​	SELECT CURTIME(), CURRENT_TIME(), CURRENT_TIME;
 
 **CONVERT**
 
