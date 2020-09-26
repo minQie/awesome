@@ -26,19 +26,39 @@
 
 结构化查询语言(Structured Query Language)，是一种特殊目的的编程语言，是一种数据库查询和程序设计语言，用于存取数据以及查询、更新和管理关系数据库系统；同时也是数据库脚本文件的扩展名。
 
-- 数据定义语言DDL（Data Definition Language）
+- 数据定义语言 `DDL`（Data Definition Language）
 
   在数据库中创建新表或删除表；为表加入索引等
 
-- 数据操纵语言DML（Data Manipulation Language）
+- 数据操纵语言 `DML`（Data Manipulation Language）
 
   INSERT、UPDATE、DELETE。也称动作查询语言
 
-- 数据查询语言DQL（Data Query Language）
+- 数据查询语言 `DQL`（Data Query Language）
 
-- 数据控制语言DCL（Data Control Language）
+- 数据控制语言 `DCL`（Data Control Language）
 
   GRANT
+
+### 编码排序规则
+
+**utf8mb4_unicode_ci 和 utf8mb4_general_ci**
+
+字符除了存储，还需要排序或者比较，这个操作与编码字符集有关，称为collation，与utf8mb4对应的是utf8mb4_unicode_ci 和 utf8mb4_general_ci这两个collation
+
+- 准确性
+
+  utf8mb4_unicode_ci 是基于标准Unicode来进行排序比较的，能保持在各个语言之间的精确排序；
+
+  utf8mb4_general_ci 并不基于Unicode排序规则，因此在某些特殊语言或者字符上的排序结果可能不是所期望的。
+
+- 性能
+
+  utf8mb4_general_ci 在比较和排序时更快，因为其实现了一些性能更好的操作，但是在现代服务器上，这种性能提升几乎可以忽略不计。
+
+  utf8mb4_unicode_ci 使用Unicode的规则进行排序和比较，其排序规则为了处理一些特殊字符，实现更加复杂。
+
+  现在基本没有理由继续使用utf8mb4_general_ci了，因为其带来的性能差异很小，远不如更好的数据设计，比如使用索引等等。
 
 ### 存储引擎
 
@@ -76,162 +96,31 @@
 
 - 索引
 
-  ​	InnoDB 是聚簇索引，MyISAM 是非聚簇索引。聚簇索引的文件存放在主键索引的叶子节点上，因此 InnoDB  必须要有主键，通过主键索引效率很高。但是辅助索引需要两次查询，先查询到主键，然后再通过主键查询到数据。因此，主键不应该过大，因为主键太大，其他索引也都会很大。而 MyISAM 是非聚集索引，数据文件是分离的，索引保存的是数据文件的指针。主键索引和辅助索引是独立的
+  InnoDB 是聚簇索引，MyISAM 是非聚簇索引。聚簇索引的文件存放在主键索引的叶子节点上，因此 InnoDB  必须要有主键，通过主键索引效率很高。但是辅助索引需要两次查询，先查询到主键，然后再通过主键查询到数据。因此，主键不应该过大，因为主键太大，其他索引也都会很大。而 MyISAM 是非聚集索引，数据文件是分离的，索引保存的是数据文件的指针。主键索引和辅助索引是独立的
 
 - 锁
 
-  ​	InnoDB 最小的锁粒度是行锁，MyISAM 最小的锁粒度是表锁。一个更新语句会锁住整张表，导致其他查询和更新都会被阻塞，因此并发访问受限。这也是 MySQL 将默认存储引擎从 MyISAM 变成 InnoDB 的重要原因之一
+  InnoDB 最小的锁粒度是行锁，MyISAM 最小的锁粒度是表锁。一个更新语句会锁住整张表，导致其他查询和更新都会被阻塞，因此并发访问受限。这也是 MySQL 将默认存储引擎从 MyISAM 变成 InnoDB 的重要原因之一
 
 - 数据总行数
   - 在 MyISAM 存储引擎中，把表的总行数存储在磁盘上，当执行 `select count(*) from t` 时，直接返回总数据
   - 在 InnoDB 存储引擎中，跟 MyISAM 不一样，没有将总行数存储在磁盘上，当执行 select count(*) from t 时，会先把数据读出来，一行一行的累加，最后返回总数
   - InnoDB 中 count(*) 语句是在执行的时候，全表扫描统计总数量，所以当数据越来越大时，语句就越来越耗时了，为什么 InnoDB 引擎不像  MyISAM 引擎一样，将总行数存储到磁盘上？这跟 InnoDB 的事务特性有关，由于多版本并发控制（MVCC）的原因，InnoDB  表“应该返回多少行”也是不确定的
 
-### 文件存储
+- 文件存储
+  - 查看数据文件目录
 
-- 查看数据文件目录
+    SHOW VARIABLES LIKE 'data%'
 
-  SHOW VARIABLES LIKE 'data%'
+  - `.frm` 
 
-- `.frm` 
+    与表相关的元数据信息都存放在frm文件，包括表结构的定义信息等
 
-  与表相关的元数据信息都存放在frm文件，包括表结构的定义信息等
+  - `.ibd` 或 `.ibdata` 
 
-- `.ibd` 或 `.ibdata` 
+    ​	这两种文件都是存放 InnoDB 数据的文件，之所以有两种文件形式存放 InnoDB 的数据，是因为 InnoDB 的数据存储方式能够通过配置来决定是使用**共享表空间**存放存储数据，还是用**独享表空间**存放存储数据。
 
-  ​	这两种文件都是存放 InnoDB 数据的文件，之所以有两种文件形式存放 InnoDB 的数据，是因为 InnoDB 的数据存储方式能够通过配置来决定是使用**共享表空间**存放存储数据，还是用**独享表空间**存放存储数据。
-
-  ​	独享表空间存储方式使用`.ibd`文件，并且每个表一个`.ibd`文件 共享表空间存储方式使用`.ibdata`文件，所有表共同使用一个`.ibdata`文件（或多个，可自己配置）
-
-### 索引
-
-#### 索引失效（待补充）
-
-有为字段设置索引，查询中涉及到相关的查询条件或者排序，可是索引失效（查询计划显示没有用到索引 - 全表扫描）的场景
-
-1. where条件的等号左边不要使用运算、函数、以及注意默认的字段类型隐式转换问题（比如编码，且默认行为是将 UTF8 转成 UTF8MB4）
-2. 复合索引。注意查询条件字段的顺序、排序条件的字段的规则得相同（要不都升序、要不都降序）
-
-#### 索引提示
-
-当MySQL确实因为某些原因，采用了错误的执行计划（没有使用预期的索引），可以使用`USE INDEX(index1, index2, ...)`，让MySQL去使用指定的索引进行查询。不过注意，虽然这是一个点，但实际一般不会用，一个是这样的SQL语句可维护性不好，另一个是一般MySQL很少会选错执行计划，如果真的选错了，也最好是采用提示的做法（相同目的，不同的SQL）
-
-**其他**
-
-​	IGNORE INDEX(index1, index2, ...)
-
-​	FORCE INDEX(index1, index2, ...)
-
-### 编码排序规则
-
-**utf8mb4_unicode_ci 和 utf8mb4_general_ci**
-
-字符除了存储，还需要排序或者比较，这个操作与编码字符集有关，称为collation，与utf8mb4对应的是utf8mb4_unicode_ci 和 utf8mb4_general_ci这两个collation
-
-- 准确性
-
-  utf8mb4_unicode_ci 是基于标准Unicode来进行排序比较的，能保持在各个语言之间的精确排序；
-
-  utf8mb4_general_ci 并不基于Unicode排序规则，因此在某些特殊语言或者字符上的排序结果可能不是所期望的。
-
-- 性能
-
-  utf8mb4_general_ci 在比较和排序时更快，因为其实现了一些性能更好的操作，但是在现代服务器上，这种性能提升几乎可以忽略不计。
-
-  utf8mb4_unicode_ci 使用Unicode的规则进行排序和比较，其排序规则为了处理一些特殊字符，实现更加复杂。
-
-  现在基本没有理由继续使用utf8mb4_general_ci了，因为其带来的性能差异很小，远不如更好的数据设计，比如使用索引等等。
-
-## 安装（Windows）
-
-### 安装
-
-- 初始化：`mysqld –initialize -insecure –console --user=mysql`
-  （mysql-8.0.14-winx64版本，要求根目录的data目录为空或者没有data目录，命令执行后将生成data目录）
-
-#### 配置mysql-5.6.41-winx64
-
- 1. 进入到`bin`目录下
-
-    不能设置环境变量，已经为第一个mysql设置了环境变量，因为指令相同，就不知道运行睡了
-
- 2. 不要修改`D:\Learning-Program\mysql-5.6.41-winx64\my-default.ini`，创建`一个my.ini`
-
-    ```mysql配置
-    [mysqld]
-    basedir = D:\Learning-Program\mysql-5.6.41-winx64
-    datadir = D:\Learning-Program\mysql-5.6.41-winx64\data
-    port = 8090
-    explicit_defaults_for_timestamp=true
-    character-set-server=utf8
-    default-storage-engine=INNODB
-    sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
-    
-    [mysql]
-    default-character-set=utf8
-    ```
-
-3. 注册服务
-4. 初始化：`mysqld --initialize –console`
-5. 打开注册表，找到`HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\自定义名称`
-6. 修改ImagePath参数：`D:\Learning-Program\mysql-5.6.41-winx64\bin\mysqld MySQL-5.6.41`
-7. 启动数据库：`net start 自定义名`
-8. 指定端口登录：`D:\Learning-Program\mysql-5.6.41-winx64\bin>mysql -P8090 -uroot -p`（无密码）
-9. 修改密码：`set password for root@localhost=password('123')`
-
-### 服务
-
-- 指令
-
-  应用程序（服务）日志：`eventvwr.msc`
-  服务：`services.msc`
-
-- 注册服务：
-
-  - `mysqld -install`
-
-  - `mysqld install MySQL-5.6.41 --default-file="D:\Learning-Program\mysql-5.6.41-winx64\my.ini"`
-
-  查看：注册成功后，可以通过控制面板 -> 管理工作 -> 服务 -> 查看名称为MySQL的服务
-
-- 清除服务
-
-  - 命令
-
-    `mysqld --remove <服务名>`
-
-  - 清注册表
-    `\HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\services\eventlog\Application\MySQL`
-    `\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\eventlog\Application\MySQL`
-
-- 启动服务：`net start mysql`
-
-- 重启服务：`service mysql restart`
-
-- 关闭服务：`net stop mysql`
-
-- 查看服务启动日志：右键**此电脑**、管理、事件查看器、Windows日志、应用程序
-
-### 改密码
-
-1. `mysql> set password for root@localhost = '新密码'`
-
-2. `mysql> use mysql;`
-   `update user set password=password('新密码') where user='root';`
-
-   `flush privileges;`
-
-3. `mysql> use mysql;`
-   `ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '新密码';`
-
-   `flush privileges;`
-
-4. `mysqladmin -u root -p password 新密码`
-   `Enter password: 旧密码`
-5. 1. 关闭正在运行的MySQL服务
-   2. 开一个DOS：`mysqld --skip-grant-TABLEs`（启动mysql服务的时候跳过权限表认证）
-   3. 再开一个DOS：`mysql`（提示登录数据库成功）
-   4. 再使用方式一或者方式二修改密码
+    ​	独享表空间存储方式使用`.ibd`文件，并且每个表一个`.ibd`文件 共享表空间存储方式使用`.ibdata`文件，所有表共同使用一个`.ibdata`文件（或多个，可自己配置）
 
 ## 关键字
 
@@ -557,7 +446,7 @@
 - 不可重复读：A事务在本次事务中，对自己未操作过的数据，进行了多次读取，结果出现了不一致或记录不存在的情况（破坏了一致性，update）
 - 幻读：A事务在本次事务中，对自己操作过的数据，进行了多次读取，第一次读取时，记录不存在，第二次读取时，记录出现了（破坏了一致性，insert和delete）
 
-#### 解决（制定标准）
+#### 解决-制定标准
 
 > 为了权衡[隔离]和[并发]的矛盾，ISO定义了四个事务级别，每个级别的隔离程度不同，允许出现的副作用也不同
 
@@ -575,7 +464,7 @@
 
 注意：这四个界别只是一个标准，各个数据库厂商，并不是完全按照这个标准来做的
 
-#### 实现（InnoDB）
+#### 实现
 
 - 锁机制：阻止其他事务对数据进行操作，各个隔离级别主要体现在读取数据时加的锁，和释放时机
 
@@ -594,6 +483,261 @@
 #### PS
 
 ​	与SQL标准不同的地方在于InnoDB存储引擎在`REPAETABLE`事务隔离级别使用的是`Next-Key Lock`锁算法，因此可以避免幻读的产生，这和其他数据库（如SQL Server）是不同的。隔离级别越低，需要请求的锁越少，或者越轻量，所以大多数据库的隔离级别都是`READ-COMMITTED`
+
+## 数据库设计
+
+### 字段
+
+- 必备字段 id、create_time、update_time
+- 虽然违背 3NF，但是实际中，字段允许适当冗余，以提高查询性能，但必须考虑数据一致。频繁修改、唯一索引、大字段不允许冗余
+
+**编码**
+
+- 因国际化需要，所有的字符存储与表示，均采用utf8字符集，那么字符计数方法需要注意
+
+  说明： SELECT LENGTH("轻松工作")； 返回为12 SELECT CHARACTER_LENGTH("轻松工作")； 返回为4
+
+  如果需要存储表情，那么选择utf8mb4来进行存储，注意它与utf8编码的区别
+
+**类型**
+
+- 任何非负数的字段，必须是 unsigned
+
+- 尽可能将所有列定义为 not null
+
+  不要使用count(列名)或count(常量)来替代count(\*)，count(\*)是SQL92定义的标准统计行数的语法，跟数据库无关，跟NULL和非NULL无关。 说明：count(\*)会统计值为NULL的行，而count(列名)不会统计此列为NULL值的行
+
+  count(distinct col) 计算该列除NULL之外的不重复行数，注意 count(distinct col1, col2) 如果其中一列全为NULL，那么即使另一列有不同的值，也返回为0
+
+  当某一列的值全是NULL时，count(col)的返回结果为0，但sum(col)的返回结果为NULL，因此使用sum()时需注意NPE问题。 正例：可以使用如下方式来避免sum的NPE问题：SELECT IFNULL(SUM(column), 0) FROM table
+
+  使用ISNULL()来判断是否为NULL值。 说明：如果在null前换行，影响可读性；从性能数据上分析，`ISNULL(column)`执行效率更快一些
+
+- 如果存储的字符串长度几乎相等，使用char定长字符串类型
+
+- varchar 类型的字段如果存储长度超过 5000，定义字段类型为 text 需要独立出来一张表，避免影响其他字段索引效率
+
+**命名**
+
+- 库名与应用名称尽量一致
+
+- 表名不使用大写字母，表名不使用复数名词
+- 表的命名最好是遵循“业务名称_表的作用”。 正例：alipay_task / force_project / trade_config
+
+- 不使用保留字
+
+- 表达是与否概念的字段，必须使用is_xxx的方式命名，数据类型是unsigned tinyint（1表示是，0表示否），例如：is_deleted
+
+  注意：POJO类中的任何布尔类型的变量，都不要加is前缀，所以，需要在<resultMap>设置从is_xxx到Xxx的映射关系。数据库表示是与否的值，使用tinyint类型，坚持is_xxx的命名方式是为了明确其取值含义与取值范围
+
+### 外键
+
+​	不得使用外键与级联，一切外键概念必须在应用层解决
+
+### 索引
+
+**命名**
+
+​	pk\_字段名、uk\_字段名、idx\_字段名
+
+**varchar**
+
+​	在varchar字段上建立索引时，必须指定索引长度，没必要对全字段建立索引，根据实际文本区分度决定索引长度
+​	说明：索引的长度与区分度是一对矛盾体，一般对字符串类型数据，长度为20的索引，区分度会高达90%以上，可以使用 `count(distinct left(列名, 索引长度))/count(*)` 的区分度来确定
+
+#### 主键索引
+
+​	在 innodb 存储引擎中又叫聚簇索引
+
+#### 唯一索引
+
+​	业务上具有唯一特性的字段，即使是组合字段，也必须建成唯一索引。 说明：不要以为唯一索引影响了insert速度，这个速度损耗可以忽略，但提高查找速度是明显的；另外，即使在应用层做了非常完善的校验控制，只要没有唯一索引，根据墨菲定律，必然有脏数据产生
+
+#### 组合索引
+
+​	建组合索引的时候，区分度最高的在最左边。 正例：如果where a=? and b=?，a列的几乎接近于唯一值，那么只需要单建idx_a索引即可。 说明：存在非等号和等号混合判断条件时，在建索引时，请把等号条件的列前置。如：where c>? and d=? 那么即使c的区分度更高，也必须把d放在索引的最前列，即建立组合索引 idx_d_c
+
+#### 覆盖索引
+
+​	利用覆盖索引来进行查询操作，避免回表。索引的分类就上面三种，覆盖索引只是一种查询的一种效果，用explain的结果，extra列会出现：using index
+
+## SQL
+
+### 规范
+
+- 数据订正（特别是删除或修改记录操作）时，要先select，避免出现误删除，确认无误才能执行更新语句
+
+- 对于数据库中表记录的查询和变更，只要涉及多个表，都需要在列名前加表的别名（或表名）进行限定
+
+  说明：对多表进行查询记录、更新记录、删除记录时，如果对操作列没有限定表的别名（或表名），并且操作列在多个表中存在时，就会抛异常。 
+
+  正例：select t1.name from table_first as t1 , table_second as t2 where t1.id=t2.id; 
+
+  反例：在某业务中，由于多表关联查询语句没有加表的别名（或表名）的限制，正常运行两年后，最近在某个表中增加一个同名字段，在预发布环境做数据库变更后，线上查询语句出现出1052异常：Column 'name' in field list is ambiguous
+
+- SQL语句中表的别名前加as，并且以t1、t2、t3、...的顺序依次命名。 说明：
+
+  1）别名可以是表的简称，或者是依照表在SQL语句中出现的顺序，以t1、t2、t3的方式命名
+
+  2）别名前加as使别名更容易识别。 
+
+  正例：select t1.name from table_first as t1, table_second as t2 where t1.id=t2.id;
+
+- in操作能避免则避免，若实在避免不了，需要仔细评估in后边的集合元素数量，控制在1000个之内
+
+- 在表查询中，一律不要使用 * 作为查询的字段列表，需要哪些字段必须明确写明。 说明：
+
+  1）增加查询分析器解析成本
+
+  2）增减字段容易与resultMap配置不一致
+
+  3）无用字段增加网络消耗，尤其是text类型的字段
+
+### 较高级优化方法
+
+- 1.**查看优化器状态**
+
+  ```mysql
+  SHOW VARIABLES LIKE 'optimizer_trace';
+  ```
+
+- 2.**会话级别临时开启**
+
+  ```mysql
+  SET session optimizer_trace="endable=on", end_marks_in_json=on;
+  ```
+
+- 3.**设置优化器追踪的内存大小**
+
+  ```mysql
+  SET OPTIMIZER_TRACE_MAX_MEM_SIZE=1000000;
+  ```
+
+- 4.**执行自己的sql**
+
+  ```mysql
+  SELECT * FROM XXX WHERE XXX = XXX
+  ```
+
+- 5.**Information_schema.optimizer_trace表**
+
+  ```mysql
+  SELECT trace FROM information_schema.OPTIMIZER_TRACE;
+  ```
+
+- 6.**导入到一个命名为xx.trace的文件，然后用JSON阅读器来查看**（如果没有控制台权限，或直接交由运维，让他把该trace文件，输出给你就行了）
+
+  ```mysql
+  SELECT TARCE INTO DUMPFILE "E:\\test.trace" FROM INFORMATION_SCHEMA.OPTIMIZER_TRACE;
+  ```
+
+- 7.**查看文件**
+
+  注意 `rows_estimation` 和 `considered_execution_plans`
+
+- **注意**
+
+  如果不设置优化器最大容量的话，可能导致优化器返回的结果不全
+
+### SQL性能优化目标
+
+​	至少要达到 range 级别，要求是ref级别，如果可以是consts最好。说明：
+
+​	1） consts 单表中最多只有一个匹配行（主键或者唯一索引），在优化阶段即可读取到数据
+
+​	2） ref 指的是使用普通的索引（normal index）
+
+​	3） range 对索引进行范围检索
+
+​	4） index 索引物理文件全扫描，速度非常慢，与全表扫描是小巫见大巫
+
+### Mybatis结果集
+
+- 不要用resultClass当返回参数，即使所有类属性名与数据库字段一一对应，也需要定义<resultMap>；反过来，每一个表也必然有一个<resultMap>与之对应。 说明：配置映射关系，使字段与DO类解耦，方便维护
+- 不允许直接拿HashMap与Hashtable作为查询结果集的输出。 反例：某同学为避免写一个<resultMap>xxx</resultMap>，直接使用HashTable来接收数据库返回结果，结果出现日常是把bigint转成Long值，而线上由于数据库版本不一样，解析成BigInteger，导致线上问题
+
+### 索引失效
+
+#### 查询条件（待完善）
+
+**核心**：不符合最左原则
+
+- 表达式计算：... WHERE `id` + 1 = 2
+
+- 函数计算：... WHERE xxx(id) = 1
+
+- 隐式转换：数据表字段的编码是 utf8mb4，查询条件的字段值编码是 utf8
+- or
+- in、not in
+- is null、is not null
+
+#### 组合索引
+
+​	注意查询条件字段的顺序、排序条件的字段的规则得相同（要不都升序、要不都降序）
+
+#### 排序
+
+- 如果GROUP BY的字段上如果有索引，因为索引默认有序，可以避免排序行为。所以如果你的分组对排序没有要求，且字段没有对应索引，一定要显示指定不排序，例：`GROUP BY xxx ORDER BY NULL`
+
+- 注意利用索引的有序性。order by 最后的字段是组合索引的一部分，并且放在索引组合顺序的最后，避免出现file_sort的情况，影响查询性能。
+
+  正例：where a=? and b=? order by c; 索引：a_b_c 反例：索引如果存在范围查询，那么索引有序性无法利用，如：WHERE a>10 ORDER BY b; 索引a_b无法排序
+
+#### 索引提示
+
+​	当MySQL确实因为某些原因，采用了错误的执行计划（没有使用预期的索引），可以采用使用 FORCE INDEX 手动指定的方式，让MySQL去使用指定的索引进行查询。但是，这仅作为一种应急预案，不推荐采用该方式，因为数据库迁移可能就不支持了（拓展性不好），还要重新做一个代码发布。首先MySQL关于优化器的设计是复杂且优秀的，我们应该尽量做到以提示的方式，而不是强制的
+
+​	1） 从SQL语句的角度：相同目的，不同的SQL
+
+​	2） 索引统计信息有问题：`analyze table` 一下
+
+​		简单说一下原理就是，MySQL的Optimizer（优化器），采用随机取样来估计（即不是一个一定准确的值）指定列数据的散列层面（区分度），并估计包括回表等IO次数等成本，会决定是否采用相关索引或是全表扫描。有时优化器可能会因为数据
+
+​	3） 删除误导MySQL的索引，这个确实是一条在实际中，确实挺常用的技巧
+
+```mysql
+IGNORE INDEX(index1, index2, ...)
+FORCE INDEX(index1, index2, ...)
+```
+
+### 场景
+
+#### JOIN
+
+1. 代替子查询
+2. 阿里规范规定
+
+- 超过三个表禁止join
+
+- 需要join的字段，数据类型保持绝对一致
+
+  多表关联查询时，保证被关联的字段需要有索引
+
+- 即使双表join也要注意表索引、SQL性能
+
+#### UNION（待补充）
+
+​	union 是将 union all 后的结果镜像一次distinct，去除重复的记录后的结果，如果对数据的重复方面没有要求，则应该使用 union all
+
+#### 大批量分页
+
+> 代码中写分页查询逻辑时，若count为0应直接返回，避免执行后面的分页语句
+
+利用延迟关联或者子查询优化超多分页场景。 说明：MySQL并不是跳过 offset 行，而是取 offset+N 行，然后返回放弃前 offset 行，返回 N 行，那当 offset 特别大的时候，效率就非常的低下，要么控制返回的总页数，要么对超过特定阈值的页数进行 SQL 改写。实际应当参照如下方式进行优化，编写 SQL语句
+
+```mysql
+SELECT 
+	t1.* 
+FROM 
+	表1 
+AS t1, (select id from 表1 where 条件 LIMIT 100000, 20) AS t2 
+WHERE 
+	t1.id = t2.id
+```
+
+#### 大批量插入（待补充）
+
+#### 大批量更新（待补充）
 
 ## 变量
 
@@ -643,7 +787,7 @@
   ) result, (SELECT @previous_date := NULL) tmp
   ```
 
-### 系统变量（会话）
+### 系统变量-会话
 
 > 官方文档：https://dev.mysql.com/doc/refman/8.0/en/
 
@@ -683,7 +827,7 @@
 
   `SET @@LOCAL.变量名=变量值`
 
-### 系统变量（全局）
+### 系统变量-全局
 
 - 查
 
@@ -846,15 +990,33 @@
 
 逻辑表达式
 
-**CAST**
+**CAST**（待补充）
+
+## 锁
+
+### 查看锁
+
+```mysql
+SHOW STATUS LIKE 'innodb_row_lock%'
+```
+
+将得到如下结果
+
+| Variable_name                 | 说明                |
+| ----------------------------- | ------------------- |
+| Innodb_row_lock_current_waits | 有多少sql正在等待锁 |
+| Innodb_row_lock_time          | 总共锁住的时间      |
+| Innodb_row_lock_time_avg      | 平均锁住的时间      |
+| Innodb_row_lock_time_max      | 最大锁住的时间      |
+| Innodb_row_lock_waits         | 锁住的次数          |
+
+### 排他锁
+
+​	执行 SELECT ... WHERE `id`= 1 FOR UPDATE，就是一个简单的条件查询并加上了排他锁（就是锁本质上就是锁索引）
+
+​	针对这个锁的级别是行锁还是表锁是取决于查询条件的列上是否有索引，有则行级别的锁，无则表锁（可以通过开启多个会话同时对一张表继续操作，观察阻塞现象来验证）
 
 ## 其他
-
-### 点
-
-- 表定义的数据类型不能大写
-
-- 比较：mysql中比较返回的真值是`1`和`0`，同C语言（凡是大于0的值作为条件，都作为true）
 
 ### 查看执行的sql
 
@@ -881,112 +1043,70 @@
 - 查看慢日志中最慢的10条查询语句
   `mysqldumpslow -t 10 /data/mysql/mysql-slow.log;`
 
-## 优化
+### SQL_MODE
 
-### 命令
+| 可用参数                   | 含义                                                         |
+| -------------------------- | ------------------------------------------------------------ |
+| ONLY_FULL_GROUP_BY         | 对于GROUP BY聚合操作，如果在SELECT中的列，没有在GROUP BY中出现，那么将认为这个SQL是不合法的，因为列不在GROUP BY从句中 |
+| STRICT_TRANS_TABLES        | 在该模式下，如果一个值不能插入到一个事务表中，则中断当前的操作，对非事务表不做任何限制 |
+| NO_ZERO_IN_DATE            | 在严格模式，不接受月或日部分为0的日期。如果使用IGNORE选项，我们为类似的日期插入'0000-00-00'。在非严格模式，可以接受该日期，但会生成警告 |
+| NO_ZERO_DATE               | 在严格模式，不要将 '0000-00-00'做为合法日期。你仍然可以用IGNORE选项插入零日期。在非严格模式，可以接受该日期，但会生成警告 |
+| ERROR_FOR_DIVISION_BY_ZERO | 在严格模式，在INSERT或UPDATE过程中，如果被零除(或MOD(X，0))，则产生错误(否则为警告)。如果未给出该模式，被零除时MySQL返回NULL。如果用到INSERT IGNORE或UPDATE IGNORE中，MySQL生成被零除警告，但操作结果为NULL |
+| NO_AUTO_CREATE_USER        | 防止GRANT自动创建新用户，除非还指定了密码                    |
+| NO_ENGINE_SUBSTITUTION     | 如果需要的存储引擎被禁用或未编译，那么抛出错误。不设置此值时，用默认的存储引擎替代，并抛出一个异常 |
 
-```mysql
-SHOW STATUS LIKE 'innodb_row_lock%'
-```
+- 查看该值的命令
 
-将得到如下结果
+  方式1：`SELECT @@sql_mode;`
 
-| Variable_name                 | 说明                |
-| ----------------------------- | ------------------- |
-| Innodb_row_lock_current_waits | 有多少sql正在等待锁 |
-| Innodb_row_lock_time          | 总共锁住的时间      |
-| Innodb_row_lock_time_avg      | 平均锁住的时间      |
-| Innodb_row_lock_time_max      | 最大锁住的时间      |
-| Innodb_row_lock_waits         | 锁住的次数          |
+  方式2：`SHOW VARIABLES LIKE 'sql_mode%';`
 
-### 通用方法
+  （命令可以直接使用，不需要`use mysql;`）
 
-- 1.**查看优化器状态**
+- 说明
 
-  ```mysql
-  SHOW VARIABLES LIKE 'optimizer_trace';
-  ```
+  自己最初开始了解这个，是因为从`5.6`版本转`8.0`版本，一个一直运行没问题的SQL报错了，就是因为`ONLY_FULL_GROUP_BY`策略导致的
 
-- 2.**会话级别临时开启**
+- 修改改值
 
-  ```mysql
-  SET session optimizer_trace="endable=on", end_marks_in_json=on;
-  ```
+  **重启后失效**
 
-- 3.**设置优化器追踪的内存大小**
+  `set @@sql_mode = <你希望的模式>;`
 
-  ```mysql
-  SET OPTIMIZER_TRACE_MAX_MEM_SIZE=1000000;
-  ```
+  **永久生效**
 
-- 4.**执行自己的sql**
+  1. 在`mysql`的配置文件的`[mysqld]`下面指定该值`sql_mode="STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"`
 
-  ```mysql
-  SELECT * FROM XXX WHERE XXX = XXX
-  ```
+  2. 重启mysql服务
 
-- 5.**Information_schema.optimizer_trace表**
+- 参考：https://blog.csdn.net/ccccalculator/article/details/70432123
 
-  ```mysql
-  SELECT trace FROM information_schema.OPTIMIZER_TRACE;
-  ```
+---
 
-- 6.**导入到一个命名为xx.trace的文件，然后用JSON阅读器来查看**（如果没有控制台权限，或直接交由运维，让他把该trace文件，输出给你就行了）
+因`ONLY_FULL_GROUP_BY`导致如下sql报错
 
-  ```mysql
-  SELECT TARCE INTO DUMPFILE "E:\\test.trace" FROM INFORMATION_SCHEMA.OPTIMIZER_TRACE;
-  ```
-
-- 7.**查看文件**
-
-  注意 `rows_estimation` 和 `considered_execution_plans`
-
-- **注意**
-
-  如果不设置优化器最大容量的话，可能导致优化器返回的结果不全
-
-### GROUP BY
-
-如果GROUP BY的字段上如果有索引，因为索引默认有序，可以避免排序行为。所以如果你的分组对排序没有要求，且字段没有对应索引，一定要显示指定不排序，例：`GROUP BY xxx ORDER BY NULL`
-
-### JOIN
-
-1. 代替子查询
-
-2. 阿里规范规定
-
-   - 超过三个表禁止join
-- 需要join的字段，数据类型保持绝对一致
-   - 多表关联查询时，保证被关联的字段需要有索引
-- 即使双表join也要注意表索引、SQL性能
-
-### 过大的分页（待真正了解原理）
-
-实例：
-`EXPLAIN SELECT * FROM user WHERE username LIKE '小明' LIMIT 1000000, 5;`
-
-- 除了用实际的查询时间检验两种查询方式的效率
-
-- 第一个查询扫描了1000005个索引节点和100005个聚簇索引上的数据节点，通过如下的方式证明
-
-  该条sql语句的作用是查看buffer pool中关于指定表的数据页和索引页，例如执行完上面两条查询后，就能够得知，完成查询实际扫描的索引节点，因为会将扫描到的节点存储到buffer pool。
-
-  为了将buffer pool清空，需要关闭`innodb_buffer_pool_dump_at_shutdown`、`innodb_buffer_load_at_starup`，然后重启MySQL服务
-
-```mysql
+```MySQL
 SELECT
-	index_name,
-	COUNT( * ) 
-FROM
-	information_schema.INNODB_BUFFER_PAGE 
-WHERE
-	INDEX_NAME IN ( 'val', 'primary' ) 
-	AND TABLE_NAME LIKE '%表名%' 
+    COUNT(*) AS dayCount,
+    DATE_FORMAT(date_time, '%W') AS weekDay
+FROM (
+    SELECT
+        COUNT(*) AS num,
+        CREATE_date AS date_time
+    FROM
+        order_detail
+    WHERE
+        `status` = 3
+        AND (pay_type = 1 OR pay_type = 2)
+        AND (`type` = 0 OR `type` = 5)
+        AND customer_id IN (SELECT id FROM customer WHERE IFNULL(customer_label_id, '') != '0001')
+        AND YEARWEEK(CREATE_date, 1) = YEARWEEK(#{date}, 1)
+    GROUP BY
+        customer_id
+) o
 GROUP BY
-	index_name;
+    weekDay
 ```
-
-## 开发
 
 ### 连接参数
 
@@ -1152,73 +1272,6 @@ GROUP BY
 `update user set host='%' where user='root'`
 
 `flush privileges;`
-
-## 坑
-
-### SQL_MODE
-
-| 可用参数                   | 含义                                                         |
-| -------------------------- | ------------------------------------------------------------ |
-| ONLY_FULL_GROUP_BY         | 对于GROUP BY聚合操作，如果在SELECT中的列，没有在GROUP BY中出现，那么将认为这个SQL是不合法的，因为列不在GROUP BY从句中 |
-| STRICT_TRANS_TABLES        | 在该模式下，如果一个值不能插入到一个事务表中，则中断当前的操作，对非事务表不做任何限制 |
-| NO_ZERO_IN_DATE            | 在严格模式，不接受月或日部分为0的日期。如果使用IGNORE选项，我们为类似的日期插入'0000-00-00'。在非严格模式，可以接受该日期，但会生成警告 |
-| NO_ZERO_DATE               | 在严格模式，不要将 '0000-00-00'做为合法日期。你仍然可以用IGNORE选项插入零日期。在非严格模式，可以接受该日期，但会生成警告 |
-| ERROR_FOR_DIVISION_BY_ZERO | 在严格模式，在INSERT或UPDATE过程中，如果被零除(或MOD(X，0))，则产生错误(否则为警告)。如果未给出该模式，被零除时MySQL返回NULL。如果用到INSERT IGNORE或UPDATE IGNORE中，MySQL生成被零除警告，但操作结果为NULL |
-| NO_AUTO_CREATE_USER        | 防止GRANT自动创建新用户，除非还指定了密码                    |
-| NO_ENGINE_SUBSTITUTION     | 如果需要的存储引擎被禁用或未编译，那么抛出错误。不设置此值时，用默认的存储引擎替代，并抛出一个异常 |
-
-- 查看该值的命令
-
-  方式1：`SELECT @@sql_mode;`
-
-  方式2：`SHOW VARIABLES LIKE 'sql_mode%';`
-
-  （命令可以直接使用，不需要`use mysql;`）
-
-- 说明
-
-  自己最初开始了解这个，是因为从`5.6`版本转`8.0`版本，一个一直运行没问题的SQL报错了，就是因为`ONLY_FULL_GROUP_BY`策略导致的
-
-- 修改改值
-
-  **重启后失效**
-
-  `set @@sql_mode = <你希望的模式>;`
-
-  **永久生效**
-
-  1. 在`mysql`的配置文件的`[mysqld]`下面指定该值`sql_mode="STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"`
-
-  2. 重启mysql服务
-
-- 参考：https://blog.csdn.net/ccccalculator/article/details/70432123
-
----
-
-因`ONLY_FULL_GROUP_BY`导致如下sql报错
-
-```MySQL
-SELECT
-    COUNT(*) AS dayCount,
-    DATE_FORMAT(date_time, '%W') AS weekDay
-FROM (
-    SELECT
-        COUNT(*) AS num,
-        CREATE_date AS date_time
-    FROM
-        order_detail
-    WHERE
-        `status` = 3
-        AND (pay_type = 1 OR pay_type = 2)
-        AND (`type` = 0 OR `type` = 5)
-        AND customer_id IN (SELECT id FROM customer WHERE IFNULL(customer_label_id, '') != '0001')
-        AND YEARWEEK(CREATE_date, 1) = YEARWEEK(#{date}, 1)
-    GROUP BY
-        customer_id
-) o
-GROUP BY
-    weekDay
-```
 
 ### 时区问题
 
