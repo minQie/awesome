@@ -48,28 +48,7 @@
 
   2. 所以上述注解修饰类的话，配合如`@Controller`、`@Component`、`@Service`、`@Bean`、`@Configuration`等注解使用；如果上述注解修饰方法的话，在配置类中（`@Configuration`修饰的类）bean定义方法上使用的话，配合`@Bean`注解使用。你都可以自定义实现`Condition`接口的类作为自定义条件，接口定义的方法会回调给你`ConditionContext`，通过`ConditionContext.getEnvironment().getProperty()`就可以通过配置文件来决定一些类、策略是否生效（当然配置文件的话，也可以直接使用@`ConditionalOnProperty`）
 
-## 注入时机
-
-- 按顺序如下
-
-1. 构造方法
-2. `@PostConstruct`修饰的方法
-3. `afterPropertiesSet`方法（Bean实现了`InitializingBean`）
-4. `@Bean(initMethod="方法名")` 
-
-[详解博客]: https://www.cnblogs.com/april-chen/p/8182631.html
-
 # Spring AOP
-
-## 参考文档
-
-[Official](https://docs.spring.io/spring/docs/5.2.0.BUILD-SNAPSHOT/spring-framework-reference/core.html#aop)
-
-[Spring aop](https://mp.weixin.qq.com/s?__biz=MzA5MTkxMDQ4MQ==&mid=2648934977&idx=1&sn=8e4caf6a17bf5e123884df81a6382214&chksm=8862127fbf159b699c4456afe35a17f0d7bed119a635b11c154751dd95f59917487c895ccb84&scene=126&sessionid=1593267278&key=55850329b0c39edb61ab5593f0fcf6a504178b085e8334b5ad0e355bbf9aca72761750c4d854261ea0d7c5f0eacf7f3915e87a8cb1f1efe0c37a3b7fe7e619700b6e7f60dcdae21fb344da3ef34b626e&ascene=1&uin=MjQzMjg2NTAzMA%3D%3D&devicetype=Windows+10+x64&version=62090070&lang=zh_CN&exportkey=AQCmXehePa1UkvX9EI8h6Fo%3D&pass_ticket=aOiZ1es1ZWVM2ZnqIV5Vv7dvJ0VUCdumm%2F83%2Fj2vRs%2FQEBDAjgbqLnfLI2nLkeQf) 
-
-[Aspect](https://mp.weixin.qq.com/s?__biz=MzA5MTkxMDQ4MQ==&mid=2648935466&idx=2&sn=f536d7a2834e6e590bc7af0527e4de1f&chksm=88621414bf159d02c146e3f358ea6874b39030871359c7eb3efd9c42d8cef1c241bd670d3237&scene=158#rd)
-
-[PointCut](https://mp.weixin.qq.com/s?__biz=MzA5MTkxMDQ4MQ==&mid=2648935037&idx=2&sn=cf813ac4cdfa3a0a0d6b5ed770255779&chksm=88621243bf159b554be2fe75eda7f5631ca29eed54edbfb97b08244625e03957429f2414d1e3&scene=158#rd)
 
 ## 简介
 
@@ -91,7 +70,7 @@ AOP的关键词如下：
 
 ## 动态代理
 
-说到AOP，肯定离不开动态代理（jdk：接口实现、cglib：继承）
+​	说到AOP，肯定离不开动态代理（jdk：接口实现、cglib：继承）
 
 ## Advice
 
@@ -109,11 +88,11 @@ AOP的关键词如下：
 
   而spring interceptor则是一个全局概念，不限于接口方法。
 
-前者先于后者执行；下文提到的interceptor指的是spring interceptor
+前者先于后者执行；下文提到的interceptor指的是 spring interceptor
 
 ---
 
-纵观一个inteceptor的定义，完成符合Advice的概念，并且父级接口中就有`Advice`，所以我们应当将interceptor理解为一种能够简化Advice实现的方式
+纵观一个 inteceptor 的定义，完成符合Advice的概念，并且父级接口中就有`Advice`，所以我们应当将 interceptor 理解为一种能够简化 Advice 实现的方式
 
 ## 实例
 
@@ -121,9 +100,7 @@ AOP的关键词如下：
 
 原理：@Aspect + @Component
 
-- 切点概念（给的就是注解增强的例子）：见`mine`项目的`priv.wmc.module.aop.AopAnnotationServiceMethodAspect`
-
-​																																																																																																																																																																																																																															
+- 切点概念（给的就是注解增强的例子）：见`java-web-learn`项目的`priv.wmc.module.aop.AopAnnotationServiceMethodAspect`
 
 ### 定义方式二
 
@@ -174,4 +151,14 @@ public class XxxConfiguration {
   
   2、扩大DefaultPointcutAdvisor的范围
 
-> 参考：https://mp.weixin.qq.com/s/e8GhmEQ_RJbA7Dc03PZi8Q
+## 参考
+
+[Official](https://docs.spring.io/spring/docs/5.2.0.BUILD-SNAPSHOT/spring-framework-reference/core.html#aop)
+
+[Spring aop](https://mp.weixin.qq.com/s?__biz=MzA5MTkxMDQ4MQ==&mid=2648934977&idx=1&sn=8e4caf6a17bf5e123884df81a6382214&chksm=8862127fbf159b699c4456afe35a17f0d7bed119a635b11c154751dd95f59917487c895ccb84&scene=126&sessionid=1593267278&key=55850329b0c39edb61ab5593f0fcf6a504178b085e8334b5ad0e355bbf9aca72761750c4d854261ea0d7c5f0eacf7f3915e87a8cb1f1efe0c37a3b7fe7e619700b6e7f60dcdae21fb344da3ef34b626e&ascene=1&uin=MjQzMjg2NTAzMA%3D%3D&devicetype=Windows+10+x64&version=62090070&lang=zh_CN&exportkey=AQCmXehePa1UkvX9EI8h6Fo%3D&pass_ticket=aOiZ1es1ZWVM2ZnqIV5Vv7dvJ0VUCdumm%2F83%2Fj2vRs%2FQEBDAjgbqLnfLI2nLkeQf) 
+
+[Aspect](https://mp.weixin.qq.com/s?__biz=MzA5MTkxMDQ4MQ==&mid=2648935466&idx=2&sn=f536d7a2834e6e590bc7af0527e4de1f&chksm=88621414bf159d02c146e3f358ea6874b39030871359c7eb3efd9c42d8cef1c241bd670d3237&scene=158#rd)
+
+[PointCut](https://mp.weixin.qq.com/s?__biz=MzA5MTkxMDQ4MQ==&mid=2648935037&idx=2&sn=cf813ac4cdfa3a0a0d6b5ed770255779&chksm=88621243bf159b554be2fe75eda7f5631ca29eed54edbfb97b08244625e03957429f2414d1e3&scene=158#rd)
+
+https://mp.weixin.qq.com/s/e8GhmEQ_RJbA7Dc03PZi8Q

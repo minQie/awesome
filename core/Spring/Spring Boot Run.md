@@ -49,13 +49,14 @@
 
 # 命令参数
 
-### 待办
+## 待办
 
 --参数要在最后？-D参数要在运行命令的jar包前面？都指定的话谁的优先级高？
 
-### 配置文件配置
+## 配置文件配置
 
 - 默认配置文件的优先级
+
   1. 运行jar包所在目录/config/application.yml
   2. 运行jar包所在目录/application.yml
   3. classpath/config/application.yml
@@ -63,13 +64,13 @@
 
 - 自定义配置文件
 
-  ​	参数的形式指定：
+  **参数的形式指定**
 
 ​		`--spring.config.location=classpath:/default.properties,classpath:/override.properties`
 
 ​		`-Dspring.config.location=D:\config\config.properties`
 
-​			变向的参数形式指定：
+​		**变向的参数形式指定**
 
 ​		`--spring.profiles.active=环境`
 
@@ -77,11 +78,11 @@
 
 ​		`-Dspring.profiles.active=环境（不生效）`
 
-​			代码中指定：
+​		**代码中指定**
 
 ​		配置类上的`@PropertySource(value={"file:config.properties"})`
 
-### 端口配置
+## 端口配置
 
 ​	`--server.port=端口`
 
@@ -91,7 +92,7 @@
 
 ​	`-Dspring-boot.run.arguments="--server.port=端口"`
 
-### 其他配置
+## 其他配置
 
 ​	`-Dspring.datasource.username=数据库用户名`
 ​	`-Dspring.datasource.password=数据库密码`
@@ -130,6 +131,3 @@
   ```
   -Dloader.path=/xxx/.../lib
   ```
-
-
-

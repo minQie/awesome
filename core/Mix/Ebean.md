@@ -31,6 +31,3 @@
 - **拓展**
 
   可以不创建`ebean.properties`来指定`currentUserProvider`，首先肯定要创建`CurrentUserProvider`实现类，然后将实现类注入自定义的`FactoryBean<EbeanServer>`实现类，显示调用`config.setCurrentUserProvider(xxx)`
-
-
-

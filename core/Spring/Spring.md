@@ -6,6 +6,13 @@
 
 @ContextConfiguration("classpath:xxx.application.yaml")
 
+
+
+```
+@SpringBootTest(classes = App.class, properties = "spring.profiles.active=dev")
+@RunWith(SpringRunner.class)
+```
+
 ## 注解聚合
 
 - 概念
@@ -66,11 +73,15 @@
 
 - **解决**
 
-  方法一：将spring的动态代理策略由默认java标准库改为CGLIB（注解式和配置式都行）
+  方法一
+
+  ​	将spring的动态代理策略由默认java标准库改为CGLIB（注解式和配置式都行）
 
   ​	`@EnableAsync(proxyTargetClass = true)`
-
-  方法二（推荐）：修改`@EnableAsync`的`proxyTargetClass`属性，按照说明会影响整个spring框架，所以应该使用局部指定的方式，为类配置动态代理策略，即在上述报错的类上添加`@Scope(proxyMode = ScopedProxyMode.TARGET_CLASS)`
+  
+  方法二（推荐）
+  
+  ​	修改`@EnableAsync`的`proxyTargetClass`属性，按照说明会影响整个spring框架，所以应该使用局部指定的方式，为类配置动态代理策略，即在上述报错的类上添加`@Scope(proxyMode = ScopedProxyMode.TARGET_CLASS)`
 
 ## 生命周期
 
