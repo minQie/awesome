@@ -10,15 +10,15 @@ beego 是一个快速开发 Go 应用的 HTTP 框架，他可以用来快速开�
 
 1. 说明
 
-   安装和下载 beego 和 Bee，默认会最终会在 `%GOPATH%\bin` 产生一个 `bee.exe`
+   安装和下载 beego 和 Bee，默认会生成一个 `%GOPATH%\bin\bee.exe`
    
    （Go 语言的 GOPATH 是可以配置多个的，默认选择第一个，下面都是同理，就不会再赘述了）
    
-2. 安装 beego 和 Bee
+2. 安装更新 beego 和 Bee
 
    ```shell
-   go get -u github.com/astaxie/beego
    go get -u github.com/beego/bee
+   go get -u github.com/astaxie/beego
    ```
 
    **问题**：可能是获取该框架的相关信息，需要科学上网，现象就是执行 `go get github.com/astaxie/beego` 控制台就卡住，并在达到超时时间后，报出相关的错误信息
@@ -81,4 +81,12 @@ beego 是一个快速开发 Go 应用的 HTTP 框架，他可以用来快速开�
 **其他命令**
 
 ​	**generate**、**migrate**、**dockerize**
+
+## 路由
+
+​	基本概念，见官网
+
+​	helloworld 见 hellobeego 项目
+
+
 
