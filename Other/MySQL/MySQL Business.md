@@ -8,17 +8,17 @@
 
   说明：对多表进行查询记录、更新记录、删除记录时，如果对操作列没有限定表的别名（或表名），并且操作列在多个表中存在时，就会抛异常。 
 
-  正例：select t1.name from table_first as t1 , table_second as t2 where t1.id=t2.id; 
+  正例：`select t1.name from table_first as t1 , table_second as t2 where t1.id=t2.id;`
 
-  反例：在某业务中，由于多表关联查询语句没有加表的别名（或表名）的限制，正常运行两年后，最近在某个表中增加一个同名字段，在预发布环境做数据库变更后，线上查询语句出现出1052异常：Column 'name' in field list is ambiguous
+  反例：在某业务中，由于多表关联查询语句没有加表的别名（或表名）的限制，正常运行两年后，最近在某个表中增加一个同名字段，在预发布环境做数据库变更后，线上查询语句出现出1052异常：`Column 'name' in field list is ambiguous`
 
-- SQL语句中表的别名前加as，并且以t1、t2、t3、...的顺序依次命名。 说明：
+- SQL语句中表的别名前加as，并且以 t1、t2、t3、...的顺序依次命名。 说明：
 
   1）别名可以是表的简称，或者是依照表在SQL语句中出现的顺序，以t1、t2、t3的方式命名
 
   2）别名前加as使别名更容易识别。 
 
-  正例：select t1.name from table_first as t1, table_second as t2 where t1.id=t2.id;
+  正例：`select t1.name from table_first as t1, table_second as t2 where t1.id=t2.id;`
 
 - in操作能避免则避免，若实在避免不了，需要仔细评估in后边的集合元素数量，控制在1000个之内
 
@@ -26,7 +26,7 @@
 
   1）增加查询分析器解析成本
 
-  2）增减字段容易与resultMap配置不一致
+  2）增减字段容易与 `resultMap` 配置不一致
 
   3）无用字段增加网络消耗，尤其是text类型的字段
 
@@ -76,17 +76,19 @@
 
   如果不设置优化器最大容量的话，可能导致优化器返回的结果不全
 
-### 性能优化目标
+### 优化目标
 
-​	至少要达到 range 级别，要求是ref级别，如果可以是consts最好。说明：
+#### 性能
 
-​	1） consts 单表中最多只有一个匹配行（主键或者唯一索引），在优化阶段即可读取到数据
+​	至少要达到 `range` 级别，要求是 `ref` 级别，如果可以是 `consts` 最好。说明：
 
-​	2） ref 指的是使用普通的索引（normal index）
+​	1） `consts` 单表中最多只有一个匹配行（主键或者唯一索引），在优化阶段即可读取到数据
 
-​	3） range 对索引进行范围检索
+​	2） `ref` 指的是使用普通的索引（normal index）
 
-​	4） index 索引物理文件全扫描，速度非常慢，与全表扫描是小巫见大巫
+​	3） `range` 对索引进行范围检索
+
+​	4） `index` 索引物理文件全扫描，速度非常慢，与全表扫描是小巫见大巫
 
 ### 索引失效
 
@@ -113,7 +115,7 @@
 
 - 注意利用索引的有序性。order by 最后的字段是组合索引的一部分，并且放在索引组合顺序的最后，避免出现file_sort的情况，影响查询性能。
 
-  正例：where a=? and b=? order by c; 索引：a_b_c 反例：索引如果存在范围查询，那么索引有序性无法利用，如：WHERE a>10 ORDER BY b; 索引a_b无法排序
+  正例：`where a=? and b=? order by c;` 索引：a_b_c 反例：索引如果存在范围查询，那么索引有序性无法利用，如：`WHERE a>10 ORDER BY b;` 索引a_b无法排序
 
 #### 索引提示
 
@@ -132,7 +134,7 @@ IGNORE INDEX(index1, index2, ...)
 FORCE INDEX(index1, index2, ...)
 ```
 
-### 场景
+### 业务场景
 
 #### JOIN
 
@@ -149,7 +151,7 @@ FORCE INDEX(index1, index2, ...)
 
 #### UNION（待补充）
 
-​	union 是将 union all 后的结果镜像一次distinct，去除重复的记录后的结果，如果对数据的重复方面没有要求，则应该使用 union all
+​	union 是将 union all 后的结果镜像一次 distinct，去除重复的记录后的结果，如果对数据的重复方面没有要求，则应该使用 union all
 
 #### 大批量分页
 
@@ -315,7 +317,11 @@ ON DUPLICATE KEY UPDATE sum = sum + VALUES(sum);
 
    - 具体实现：https://github.com/didi/tinyid
 
-[微信公众号]: https://mp.weixin.qq.com/s?__biz=MzU5NTgzMDYyMA==&amp;mid=2247488761&amp;idx=1&amp;sn=4909fe1220c6d3cdf762e09766561905&amp;chksm=fe6aa6cac91d2fdcb6a2d61aa0ea8927d3348fb1b29c9356502ec343a8fcaab370a015791582&amp;scene=126&amp;sessionid=1591504903&amp;key=55850329b0c39edb7b515cbb9a50a69bfaf44cacfa71990fad565f4e35dec28d696581116eb0a79974a4fbc1b40d85349f8362f928dc365b8ab6fa8d0f5526488dee15ef8a0b8578fc26dfb5adbde067&amp;ascene=1&amp;uin=MjQzMjg2NTAzMA%3D%3D&amp;devicetype=Windows+10+x64&amp;version=62090070&amp;lang=zh_CN&amp;exportkey=AVO8s81eVVWpDJbHZ5x7YDs%3D&amp;pass_ticket=tSWfkndbTMJy7UxUdd2J66UIpvpKQOW8oIRIcNYmXmcBRwagb%2BJTdjMmaw5wKjWp	"Java 专栏"
+[微信公众号]: 文章已被投诉下架了...
+
+### Explain 详解
+
+通常
 
 ## 数据库设计
 
@@ -325,33 +331,50 @@ ON DUPLICATE KEY UPDATE sum = sum + VALUES(sum);
 - 虽然违背 3NF，但是实际中，字段允许适当冗余，以提高查询性能，但必须考虑数据一致。频繁修改、唯一索引、大字段不允许冗余
 - 命名不要用模糊不具体的单词，如 type
 
-**编码**
+#### 编码
 
-- 因国际化需要，所有的字符存储与表示，均采用utf8字符集，那么字符计数方法需要注意
+- 因国际化需要，所有的字符存储与表示，均采用 utf8 字符集，那么字符计数方法需要注意
 
-  说明： SELECT LENGTH("轻松工作")； 返回为12 SELECT CHARACTER_LENGTH("轻松工作")； 返回为4
+  说明：
 
-  如果需要存储表情，那么选择utf8mb4来进行存储，注意它与utf8编码的区别
+  `SELECT LENGTH("轻松工作")`  返回为 12
+  
+  `SELECT CHARACTER_LENGTH("轻松工作")` 返回为4
 
-**类型**
+- 如果需要存储表情，那么选择utf8mb4来进行存储，注意它与utf8编码的区别
+
+#### 类型
 
 - 任何非负数的字段，必须是 unsigned
 
 - 尽可能将所有列定义为 not null
 
-  不要使用count(列名)或count(常量)来替代count(\*)，count(\*)是SQL92定义的标准统计行数的语法，跟数据库无关，跟NULL和非NULL无关。 说明：count(\*)会统计值为NULL的行，而count(列名)不会统计此列为NULL值的行
+  **COUNT**：不要使用count(列名)或count(常量)来替代count(\*)，count(\*)是SQL92定义的标准统计行数的语法，跟数据库无关，跟NULL和非NULL无关。 说明：count(\*)会统计值为NULL的行，而count(列名)不会统计此列为NULL值的行
 
-  count(distinct col) 计算该列除NULL之外的不重复行数，注意 count(distinct col1, col2) 如果其中一列全为NULL，那么即使另一列有不同的值，也返回为0
+  count(distinct col) 计算该列除NULL之外的不重复行数，注意 `count(distinct col1, col2)` 如果其中一列全为NULL，那么即使另一列有不同的值，也返回为0
 
-  当某一列的值全是NULL时，count(col)的返回结果为0，但sum(col)的返回结果为NULL，因此使用sum()时需注意NPE问题。 正例：可以使用如下方式来避免sum的NPE问题：SELECT IFNULL(SUM(column), 0) FROM table
+  **SUM**：当某一列的值全是NULL时，count(col)的返回结果为0，但sum(col)的返回结果为NULL，因此使用sum()时需注意NPE问题。 正例：可以使用如下方式来避免sum的NPE问题：`SELECT IFNULL(SUM(column), 0) FROM table`
 
-  使用ISNULL()来判断是否为NULL值。 说明：如果在null前换行，影响可读性；从性能数据上分析，`ISNULL(column)`执行效率更快一些
+  **道理上**
+
+  1. 难以优化引用可空列查询，它会使索引、索引统计和值更加复杂
+
+  2. 可空列需要更多的存储空间，还需要 MySQL 内部进行特殊处理
+
+  3. 可空列被索引后，每条记录都需要一个额外的字节
+  4. NULL值到非NULL的更新无法做到原地更新，更容易发生索引分裂，从而影响性能
+
+  **业务上**
+
+  1. 所有使用NULL值的情况，都可以通过一个有意义的值的表示，这样有利于代码的可读性和可维护性，并能从约束上增强业务数据的规范性
+  2. 在时间类型的字段上，对 NULL 的处理容易出现问题
+  3. NULL 值和任何字段进行比较、操作得到的都是 NULL，容易出错
 
 - 如果存储的字符串长度几乎相等，使用char定长字符串类型
 
 - varchar 类型的字段如果存储长度超过 5000，定义字段类型为 text 需要独立出来一张表，避免影响其他字段索引效率
 
-**命名**
+#### 命名
 
 - 库名与应用名称尽量一致
 
@@ -361,9 +384,9 @@ ON DUPLICATE KEY UPDATE sum = sum + VALUES(sum);
 
 - 不使用保留字
 
-- 表达是与否概念的字段，必须使用is_xxx的方式命名，数据类型是unsigned tinyint（1表示是，0表示否），例如：is_deleted
+- 表达是与否概念的字段，必须使用 `is_xxx` 的方式命名，数据类型是 `unsigned tinyint`（1表示是，0表示否），例如：`is_deleted`
 
-  注意：POJO类中的任何布尔类型的变量，都不要加is前缀，所以，需要在<resultMap>设置从is_xxx到Xxx的映射关系。数据库表示是与否的值，使用tinyint类型，坚持is_xxx的命名方式是为了明确其取值含义与取值范围
+  注意：POJO类中的任何布尔类型的变量，都不要加 `is` 前缀，所以，需要在 `<resultMap>` 设置从 `is_xxx` 到 `Xxx` 的映射关系。数据库表示是与否的值，使用 `tinyint` 类型，坚持 `is_xxx` 的命名方式是为了明确其取值含义与取值范围
 
 ### 外键
 
@@ -395,3 +418,69 @@ ON DUPLICATE KEY UPDATE sum = sum + VALUES(sum);
 #### 覆盖索引
 
 ​	利用覆盖索引来进行查询操作，避免回表。索引的分类就上面三种，覆盖索引只是一种查询的一种效果，用explain的结果，extra列会出现：using index
+
+## 大点
+
+### 预编译
+
+**结论**
+
+从结论开始说，预编译在实际项目中，几乎没有作用。原因是作用不大，SQL 注入由服务端程序防治；预编译一个模板，多次调用来提高性能，在实际中也因为查询大多只执行一次，且要执行多次时，也更推荐进行批量操作，来减小网络IO的开销，还因为一个预编译模板只在一个 Connection 中有效等因素
+
+**官方说明**
+
+- If a prepared statement with the given name already exists, it is deallocated implicitly before the new statement is prepared. This means that if the new statement contains an error and cannot be prepared, an error is returned and no statement with the given name exists. 
+- A prepared statement created in one session is not available to other sessions.
+- When a session ends, whether normally or abnormally, its prepared statements no longer exist. If auto-reconnect is enabled, the client is not notified that the connection was lost. For this reason, clients may wish to disable auto-reconnect.
+- A prepared statement created within a stored program continues  to exist after the program finishes executing and can be  executed outside the program later.
+- A statement prepared in stored program context cannot refer to  stored procedure or function parameters or local variables  because they go out of scope when the program ends and would  be unavailable were the statement to be executed later outside  the program. As a workaround, refer instead to user-defined  variables, which also have session scope
+
+- and more...See detail at [page](https://dev.mysql.com/doc/refman/8.0/en/prepare.html)
+
+**手动执行预编译**
+
+```mysql
+-- 定义：对使用参数占位符的 sql 语句进行预编译
+PREPARE get_users FROM 'SELECT * FROM user WHERE id = ? AND is_deleted = ?';
+-- 变量，用于为预编译语句设置参数
+SET @id='1', @is_deleted='0';
+-- 执行：调用预编译的结果
+EXECUTE get_users USING @id, @is_deleted;
+
+-- 释放、删除预编译语句
+{DEALLOCATE | DROP} PREPARE stmt_name
+```
+
+**定义预编译语句数量上限的变量**
+
+```mysql
+max_prepared_stmt_count
+```
+
+**查看数据库中记录的预编译相关的全局变量的记录信息**
+
+```mysql
+SHOW GLOBAL STATUS LIKE '%prepare%'
+```
+
+**web 程序开发使用预编译**（很早的博客文章里的内容了，参数的含义没错，但是因为 MySQL 版本或者不同语言的驱动程序版本的问题，参数的默认值是不同的）
+
+- MySQL 的连接 url 参数1
+
+  ```mysql
+  useServerPrepStmts=true
+  ```
+
+  该参数在 JDBC 中的原理：ConnectionImpl 在 prepareStatement 时会产生一个 ServerPreparedStatement.在这个 ServerPreparedStatement 对象构造时首先会把当前SQL语句发送给 MySQL 进行预编译，然后将返回的结果缓存起来，其中包含预编译的名称（我们可以看成是当前SQL语句编译后的函数名），签名（参数列表），然后执行的时候就会直接把参数传给这个函数请求MySQL执行这个函数
+
+- MySQL 的连接 url 参数2
+
+  ```mysql
+  cachePrepStmts=true
+  ```
+
+  实际上，参数1的效果是，每次执行 SQL 语句都会进行预编译，参数开启了，JVM 端才会缓存每个SQL语句的预编译结果，就是以SQL语句为key，将预编译结果缓存起来
+
+  同一条SQL语句尽量在一个全局的地方定义，然后在不同地方引用，这样做一是为方便对 SQL 做统一检查和优化，就像 Mybatis 把 SQL 语句定义在 XML 文件中一样。二是同一语句不同写法，即使空格不同，大小写不同也会重新预编译，因为JVM端缓存是直接以 SQL 本身为 key 而不会对 SQL 格式化以后再做为 key
+
+  某个 PrepareStatement 关闭，并不真正关闭这个底层，因为当前参数的缘故，预编译结果还保留着

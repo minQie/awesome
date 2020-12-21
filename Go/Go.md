@@ -192,6 +192,8 @@ func main() {
 
 ​	*go 源码文件名* 以及 *go 源码文件所在的文件夹名* 和 *包名* 没有直接联系，但是同一个文件夹下的 go 文件 只能有一个包名
 
+​	注意：并不要求包名一定要和文件夹名相同
+
 **导包**
 
 ​	`import "项目名/xxx/.../最后一级"`：常规导包，导入后，当前 GO 源码文件内就可以通过 `最后一级.` 的方式调用大驼峰命名的变量、方法
@@ -206,30 +208,14 @@ func main() {
 
 2. Java 中开发者无法为包取名为关键字，因为包名会体现在源码中，所以就会出现语法错误。而 GO 语言中是可以的，以 `package` 关键子为例，自定义包名为 `package` 的包，最终在源码会变为 `_package`（多了 `_`）
 
-## 关键字
-
-break、default、func、interface
-
-select、case、defer、go
-
-map、struct、chan、else
-
-goto、package、switch、const
-
-failthrough、if、range、type
-
-continue、for、import、return
-
-var
-
 ### type
 
-​	最常用的用法就是定义结构体和接口了，详见具体的模块，这里提一个，替换的概念
+最常用的用法就是定义结构体和接口了，详见具体的模块，这里提一个，替换的概念
 
-```
+```go
 type Xxx string
 
-// 像这样为 string 起一个别名为 Xxx，但是，这也是可以为 Xxx 定义方法的
+// 像这样为 string 起一个别名为 Xxx，这样就可以为 Xxx 定义方法了
 func (xxx *Xxx) test() {
 	...
 }
@@ -248,59 +234,35 @@ iota、len、make、new
 
 panic、print、println
 
-布尔类型：false、true
+uintptr（无符号整型，用于存放一个指针）、nil（空值）
 
-*无符号整数*：unit8（0~255）、unit16、unit32、unit64
+*布尔类型*：false、true
 
-*有符号整数*：int8（-128~127）、int16、int32、int64
+*无符号整数*：`uint8（0~255）别名 byte`、`uint16`、`uint32`、`uint64`
+
+*有符号整数*：`int8（-128~127）`、`int16`、`int32 别名 rune`、`int64`
 
 *浮点型*：float32（IEEE-754 32位浮点型数）、float64（IEEE-754 64位浮点型数）
 
 *复数*：complex64（32位实数和虚数）、complex128（64位实数和虚数）
 
-rune（类似int32）、byte（类似 unit8）、unit（32位 或 64位）、int（同unit）
-
-unitptr（无符号整型，用于存放一个指针）、nil（空值）
-
 ## 数据类型
 
-- 布尔
+可以参见 `GOROOT\src\builtin\builtin.go`
 
-  值只能为 true 或 false
-
-- 数字
-
-  整型 int 和 浮点类型 float32、float64，GO 语言还支持复数，其中位运算采用补码
-
-- 字符串
-
-  字符串就是一串固定长度的字符序列，GO 的字符串是由单个字节连接起来的。GO 语言的字符串的字节使用 UTF-8 编码表示 Unicode 文本
-
-- 派生类型
-
-  指针
-
-  数组
-
-  结构化（struct）
-
-  Channel
-
-  函数
-
-  切片
-
-  接口（interface）
-
-  Map
+`int`, `uint` 和 `uintptr` 在 32 位系统上通常为 32 位宽，在 64 位系统上则为 64 位宽。当你需要一个整数值时应使用 `int` 类型，除非你有特殊的理由使用固定大小或无符号的整数类型
 
 ### 类型转换
 
-​	**GO 语言不支持隐式转换类型**（将 int32 类型的变量赋值给 int64，编译不通过）
+​	**GO 语言不支持隐式转换类型，必须显式转换**
+
+​	将 `int32` 类型的变量赋值给 `int64`，编译不通过
 
 ​	语法：`类型(表达式)`
 
-​	可以将 `int` 抓成 `float32`
+- 可以将 `int` 转成 `float32`
+
+- 通过 type 关键字定义的类型别名可以直接通过类型转换，而不是类型断言
 
 ### 类型断言
 
@@ -310,7 +272,7 @@ unitptr（无符号整型，用于存放一个指针）、nil（空值）
 
 ​	GO 提供了类型断言：`value := i.(类型)`、`var value Type = i.(类型)`，拿上例来说，可以通过 变量a 获取其底层值，`val s S = a.(S)`，拿到了结构体类型的实例本身，就可以调用其实现的任何接口方法了
 
-**再引出**：如果一个结构体没有实现任何接口，调用该结构体实例变量的类型断言是编译不通过的，那么，如果知道一个接口的底层值是否实现了其他接口？
+**再引出**：如果一个结构体没有实现接口，调用该结构体实例变量的进行接口类型的断言是编译不通过的，那么，如何知道一个接口的底层值是否实现了其他接口？
 
 ​	还有一种类型断言的变体，其语法是 `value, ok := i.(类型)`，该语法的意思是，如果 Type 实现了 i 的接口类型，那么 ok 为 true，否则 ok 为 false，value 为 Type 对应的结构体类型的零值，所以下面这样的写法是比较常见的
 
@@ -324,6 +286,8 @@ func test(xxx {}interface) {
     }
 }
 ```
+
+- 其实再往深处说一些，就说到反射了，类型 → 接口 → 反射，这样的关联，详见 “反射三定律”
 
 ### 类型开关
 
@@ -887,6 +851,8 @@ func change(c *Circle, radius float64)  {
   )
   ```
 
+- 不能将结构体实例定义为常量
+
 ### iota
 
 ​	特殊常量，可以认为是一个可以被编译器修改的常量
@@ -957,7 +923,7 @@ const (
   }
   ```
 
-- switch
+- **switch**
 
   和传统 swith 的语法相比，GO 语言中主要有一下几点不同、拓展
 
@@ -1326,9 +1292,9 @@ GO 语言的主要通过其 Goroutine 来实现的轻量、IO 多路复用的线
 - 通道类型
 
   ```
-  go func(c chan int) { // 读写均可的channel c } (a)
-  go func(c <- chan int) { // 只读的Channel } (a)
-  go func(c chan <- int) {  // 只写的Channel } (a)
+  go func(c chan int) { // 读写均可的channel c } (xxx)
+  go func(c <- chan int) { // 只读的Channel } (xxx)
+  go func(c chan <- int) {  // 只写的Channel } (xxx)
   ```
 
 - 基本示例
@@ -1407,6 +1373,12 @@ GO 语言的主要通过其 Goroutine 来实现的轻量、IO 多路复用的线
 
 - 关闭通道并不会丢失里面的数据，只是让读取通道数据的时候不会读完之后一直阻塞等待新数据写入
 
+## 测试
+
+Go拥有一个轻量级的测试框架，它由 `go test` 命令和 `testing` 包构成。
+
+你可以通过创建一个名字以 `_test.go` 结尾的，包含名为 `TestXXX` 且签名为 `func (t *testing.T)` 函数的文件来编写测试。 测试框架会运行每一个这样的函数；若该函数调用了像 `t.Error` 或 `t.Fail` 这样表示失败的函数，此测试即表示失败。
+
 ## 跨平台编译
 
 ​	跨平台编译又叫交叉编译，其实原理就是通过参数的形式指定目标操作系统的平台和处理器架构就可以了
@@ -1426,12 +1398,12 @@ GO 语言的主要通过其 Goroutine 来实现的轻量、IO 多路复用的线
   Linux、Mac：EXPORT
 
   ```shell
-  Windows → Linux：CGO_ENABLE=0 GOOS=linux GOARCH=amd64 go build
-  Windows → Max：CGO_ENABLE=0 GOOS=darwin GOARCH=amd64 go build
-  Linux → Mac：CGO_ENABLE=0 GOOS=darwin GOARCH=amd64 go build
+  Windows → Linux：CGO_ENABLE=0 GOOS=linux   GOARCH=amd64 go build
+  Windows → Max：  CGO_ENABLE=0 GOOS=darwin  GOARCH=amd64 go build
+  Linux → Mac：    CGO_ENABLE=0 GOOS=darwin  GOARCH=amd64 go build
   Linux → Windows：CGO_ENABLE=0 GOOS=windows GOARCH=amd64 go build
-  Max → Linux：CGO_ENABLE=0 GOOS=linux GOARCH=amd64 go build
-  Max → Windows：CGO_ENABLE=0 GOOS=windows GOARCH=amd64 go build
+  Max → Linux：    CGO_ENABLE=0 GOOS=linux   GOARCH=amd64 go build
+  Max → Windows：  CGO_ENABLE=0 GOOS=windows GOARCH=amd64 go build
   ```
 
 ## 其他
@@ -1445,14 +1417,3 @@ GO 语言的主要通过其 Goroutine 来实现的轻量、IO 多路复用的线
   ```
   go get -u github.com/google/gops
   ```
-
-## 读书笔记
-
-1. 编译速度快（不像 Java 遍历依赖链中所有依赖的库）
-
-2. go的多线程 （内存消耗小的goroutine，通道替代传统设计的复杂同步锁机制）
-
-3. 没有继承！
-
-4. 接口实现非独特（？）
-

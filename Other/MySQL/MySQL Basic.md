@@ -1,8 +1,10 @@
 # MySQL
 
-## 概念
+## 阅读说明
 
-### 分层
+- 本文所有代码片段中的 `[]` 同 MySQL 官方文档，都代表可选的意思
+
+## 底层原理
 
 - 连接层
 
@@ -20,7 +22,7 @@
 
   第四层为数据存储层，主要是将数据存储在运行于该设备的文件系统之上，并完成与存储引擎的交互
 
-### SQL
+## SQL 类型
 
 结构化查询语言(Structured Query Language)，是一种特殊目的的编程语言，是一种数据库查询和程序设计语言，用于存取数据以及查询、更新和管理关系数据库系统；同时也是数据库脚本文件的扩展名。
 
@@ -38,27 +40,7 @@
 
   GRANT
 
-### 编码排序规则
-
-**utf8mb4_unicode_ci 和 utf8mb4_general_ci**
-
-字符除了存储，还需要排序或者比较，这个操作与编码字符集有关，称为collation，与utf8mb4对应的是utf8mb4_unicode_ci 和 utf8mb4_general_ci这两个collation
-
-- 准确性
-
-  utf8mb4_unicode_ci 是基于标准Unicode来进行排序比较的，能保持在各个语言之间的精确排序；
-
-  utf8mb4_general_ci 并不基于Unicode排序规则，因此在某些特殊语言或者字符上的排序结果可能不是所期望的。
-
-- 性能
-
-  utf8mb4_general_ci 在比较和排序时更快，因为其实现了一些性能更好的操作，但是在现代服务器上，这种性能提升几乎可以忽略不计。
-
-  utf8mb4_unicode_ci 使用Unicode的规则进行排序和比较，其排序规则为了处理一些特殊字符，实现更加复杂。
-
-  现在基本没有理由继续使用utf8mb4_general_ci了，因为其带来的性能差异很小，远不如更好的数据设计，比如使用索引等等。
-
-### 存储引擎
+## 存储引擎
 
 - 查看支持的
 
@@ -82,7 +64,7 @@
 
   `SET default_storage_engine=NDBCLUSTER;`（还可以通过修改配置文件）
 
-**INNODB 和 MYISAM 的差异**
+### INNODB 和 MYISAM
 
 - 事务
 
@@ -120,24 +102,7 @@
 
     ​	独享表空间存储方式使用`.ibd`文件，并且每个表一个`.ibd`文件 共享表空间存储方式使用`.ibdata`文件，所有表共同使用一个`.ibdata`文件（或多个，可自己配置）
 
-## 数据类型
-
-### 字段长度
-
-对于字符类型：
-
-- CHAR 决定每列存储字符个数，不足补空字符，超出截掉后面
-
-- VARCHAR 决定了每列能存储的最大字符个数，同上，超出截取
-- TEXT 
-
-对于数字类型的字段：
-
-- TINYINT、SMALLINT、DEDIUMINT、INT、BIGINT 类型的字段长度并不影响每列存储的大小，都是固定的。此时，字段长度的含义是 *显示位宽*，这个显示仅针对特定客户端输出时才有显示效果，目前仅发现使用MySQL Shell才有显示效果，其他客户端连接时均无，这里给一个应用场景：sum int(5) unsigned ZEROFILL DEFAULT NULL（要使用该特性，需要加上 ZEROFILL 关键字修饰），假如存的是 123，那么会输出 00123，这个格式化就只有补零。对存储环节没有任何帮助，仅改变输出显示环节。而“格式化显示”一般在前端或者后端的应用层操作就可以了，无需在数据库中输出时操作，所以说，这个功能是多么的鸡肋。从侧面说，很多 ORM 框架映射的数字类型字段的长度都是 0，直接无视
-
-## 操作
-
-### 数据库
+## 数据库
 
 - 增
 
@@ -175,7 +140,7 @@
   SHOW CREATE DATABASE `数据库名`;
   ```
 
-### 数据表
+## 数据表
 
 > 官网：https://dev.mysql.com/doc/refman/8.0/en/create-table.html
 
@@ -202,7 +167,7 @@
     `update_time`                  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `is_deleted`                   TINYINT UNSIGNED DEFAULT 0 COMMENT '删除标识（0=正常，1=删除）',
     [CONSTRAINT [`pk_id`]] PRIMARY KEY (`id`) [COMMENT '注释'],
-    [CONSTRAINT [`uq_唯一索引字段名`]] UNIQUE [INDEX | KEY] (`字段名`) [COMMENT '注释']
+    [CONSTRAINT [`uq_唯一索引字段名`]] UNIQUE [INDEX | KEY] (`字段名`, ...) [COMMENT '注释']
   ) [ENGINE = InnoDB] [AUTO_INCREMENT = 1] [CHARACTER SET = utf8 COLLATE = utf8_general_ci] COMMENT = 'XXX表'
   ```
 
@@ -236,24 +201,6 @@
   ) COMMENT = '附件类型表';
   ```
 
-- 索引
-
-  ```MySQL
-  -- 普通索引
-  CREATE INDEX `idx_字段名` ON `表名` (字段名) [COMMENT '注释'];
-  
-  -- 唯一索引
-  CREATE UNIQUE INDEX `uk_字段名` ON `表名` (字段名) [COMMENT '注释'];
-  ```
-
-- 外键
-
-  ```MySQL
-  ALTER TABLE `attachment` ADD CONSTRAINT fk_attachment_attachment_type_id FOREIGN KEY (attachment_type_id) REFERENCES `attachment_type` (id) [ON DELETE RESTRICT] [ON UPDATE RESTRICT];
-  ```
-
-  创建外键关系, 会默认创建一个对应的索引
-
 - 删除
 
   ```MySQL
@@ -286,7 +233,7 @@
   FROM
   	( SELECT table_name FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '数据库名' ) table_name_list;
   ```
-  
+
 - 查看表名
 
   ```MySQL
@@ -305,7 +252,7 @@
   SHOW CREATE TABLE `表名`;
   ```
 
-### 数据列
+## 数据列
 
 - 增
 
@@ -322,7 +269,7 @@
 - 改（全改 - 除列名）
 
   ```MySQL
-  ALTER TABLE `表名` MODIFY [COLUMN] `列名` VARCHAR(10) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' DEFAULT 'XXX' COMMENT 'XXX' [AFTER `列名`] | [FIRST];
+  ALTER TABLE `表名` MODIFY [COLUMN] `列名` VARCHAR(10) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL DEFAULT 'XXX' COMMENT 'XXX' [AFTER `列名`] | [FIRST];
   ```
 
   ```MySQL
@@ -340,23 +287,23 @@
   ```mysql
   ALTER TABLE `表名` ALTER [COLUMN] `列名` DROP DEFAULT;
   ```
-  
+
 - 删
 
   ```MySQL
   ALTER TABLE `表名` DROP [COLUMN] `列名`;
   ```
 
-### 数据行
+## 数据行
 
 - 增
 
   ```MySQL
-  指定列值插入：INSERT [INTO] `表名` (`列名1`, `列名2`, `列名3`…) VALUES(值1, 值2, 值3…);
+  指定列值插入：INSERT [INTO] `表名` (`列名1`, `列名2`, `列名3`…) VALUES(值1, 值2, 值3…), ...;
   ```
 
   ```MySQL
-  全值插入（需要严格按照字段顺序）：INSERT [INTO] `表名` VALUES(值1, 值2, 值3…);
+  全值插入（需要严格按照字段顺序）：INSERT [INTO] `表名` VALUES(值1, 值2, 值3…), ...;
   ```
 
   注意：值如果是字符串或者日期需要加引号‘ ’（一般是单引号）
@@ -381,15 +328,358 @@
 
   注意：`TRUNCATE`会删除表中所有数据、`AUTO_INCREMENT`置为`0`、删除的数据不能恢复
 
-### 分组（待补充）
+## 字段
 
-### 分页（待补充）
+### 类型
+
+#### 整型
+
+TINYINT
+
+INT
+
+BIGINT
+
+#### 浮点型
+
+DECIMAL(总长度, 小数位长度)
+
+#### 字符串
+
+VARCHAR
+
+CHAR
+
+TEXT
+
+#### JSON
+
+这是个比较特殊的数据类型了，讲道理用 MySQL 存存还行，要是逻辑操作，就像存储过程对数据库层面有那么多逻辑操作，个人还是不太能接收的。一个是，这样要是到达了性能瓶颈，整个服务应用还有数据库就要大重构了，这个叫没有对未来，没有对流量做拓展，对于该数据类型操作，直接结合官网看如下实例
+
+- DDL
+
+  ```mysql
+  CREATE TABLE `test_json_field` (
+      `id`    BIGINT UNSIGNED     KEY AUTO_INCREMENT,
+      `name`  VARCHAR(10)         NOT NULL,
+      `extra` JSON
+  ) COMMENT '测试学习 MySQL 中的 JSON 操作';
+  ```
+  
+- 插入
+
+  ```mysql
+  -- 插入 JSON 数据
+  -- 1、JSON_OBJECT 中 重复的键名，后面的覆盖前面的
+  -- 2、JSON_OBJECT 中 奇数个参数，执行报错
+  -- INSERT test_json_field (name, extra) VALUES
+  -- ('小红', JSON_OBJECT('age', 1, 'age', 2, 'address', '马哥'))
+  
+  INSERT test_json_field (name, extra) VALUES
+  ('BOX', JSON_ARRAY("壹", "贰", "三"))
+  ```
+
+- 查询
+
+  ```mysql
+  -- 一、查询 JSON 数据中某个字段的值
+  -- 方式1、column->path 查询结果带引号
+  SELECT extra -> '$.address' FROM test_json_field WHERE id = 2
+  -- 方式2、column->>path
+  SELECT extra ->> '$.address' FROM test_json_field WHERE id = 2
+  -- 方式3、JSON_EXTRACT(column, path) 查询结果带引号
+  SELECT JSON_EXTRACT(extra, '$.address') FROM test_json_field WHERE id = 2
+  
+  -- 二、查询 JSON 数据中数组中指定下标的值
+  -- 超出数组下标，返回 Null
+  SELECT extra->>'$[4]' FROM test_json_field WHERE id = 4
+  
+  -- 总结：取值表达式就是 $打头，后边就是键值
+  
+  -- 特殊的 JSON 数组范围取值
+  SELECT JSON_EXTRACT('[1, 2, 3, 4, 5]', '$[1 to 3]');
+  SELECT JSON_EXTRACT('[1, 2, 3, 4, 5]', '$[last-3 to last-1]');
+  ```
+
+- 操作函数
+
+  
+  JSON 对象之间是可以比较的，这里就不展开说了
+  
+  |                |                                                              |
+  | -------------- | ------------------------------------------------------------ |
+  | JSON_OBJECT    | 创建 JSON 对象                                               |
+  | JSON_OBJECTAGG | AGG 是 Aggregate（ 聚合） 的缩写，都是配合 GROUP BY 将一键对应的多值拼装成一整个 JSON 数据用的 |
+  | JSON_ARRAY     | 创建 JSON 数组                                               |
+  | JSON_ARRAYAGG  |                                                              |
+  | JSON_UNQUOTE   | 通过该函数解查询 JSON 字段结果中引号                         |
+  | JSON_SET       | 修改 JSON 对应键的值，不存在就添加                           |
+  | JSON_INSERT    | 向 JSON 中指定的位置插入值，如果指定位置已存在值则什么也不做 |
+  | JSON_REPLACE   | 修改 JSON 指定位置的值                                       |
+  | JSON_REMOVE    | 删除 JSON 指定位置的值                                       |
+
+### 长度
+
+对于字符类型：
+
+- CHAR 决定每列存储字符个数，不足补空字符，超出截掉后面
+
+- VARCHAR 决定了每列能存储的最大字符个数，同上，超出截取
+- TEXT 
+
+对于数字类型的字段：
+
+- TINYINT、SMALLINT、DEDIUMINT、INT、BIGINT 类型的字段长度并不影响每列存储的大小，都是固定的。此时，字段长度的含义是 *显示位宽*，这个显示仅针对特定客户端输出时才有显示效果，目前仅发现使用MySQL Shell才有显示效果，其他客户端连接时均无，这里给一个应用场景：sum int(5) unsigned ZEROFILL DEFAULT NULL（要使用该特性，需要加上 ZEROFILL 关键字修饰），假如存的是 123，那么会输出 00123，这个格式化就只有补零。对存储环节没有任何帮助，仅改变输出显示环节。而“格式化显示”一般在前端或者后端的应用层操作就可以了，无需在数据库中输出时操作，所以说，这个功能是多么的鸡肋。很多 ORM 框架映射的数字类型字段的长度都是 0，直接无视，这也是从侧面体现出这点
+
+### 编码排序规则
+
+先说一下编码规则，什么 MySQL UTF8 的坑等，就不展开说，编码规则是针对 MySQL 中的字符数据类型来说的，CHAR、VARCHAR、TEXT 等
+
+**utf8mb4_unicode_ci 和 utf8mb4_general_ci**（以下说法来自微信公众号的一篇文章）
+
+字符除了存储，还需要排序或者比较，这个操作与编码字符集有关，称为 `collation`，与 `utf8mb4` 对应的是 `utf8mb4_unicode_ci` 和 `utf8mb4_general_ci` 这两个collation
+
+- 准确性
+
+  `utf8mb4_unicode_ci` 是基于标准Unicode来进行排序比较的，能保持在各个语言之间的精确排序；
+
+  `utf8mb4_general_ci` 并不基于Unicode排序规则，因此在某些特殊语言或者字符上的排序结果可能不是所期望的。
+
+- 性能
+
+  `utf8mb4_general_ci` 在比较和排序时更快，因为其实现了一些性能更好的操作，但是在现代服务器上，这种性能提升几乎可以忽略不计。
+
+  `utf8mb4_unicode_ci` 使用Unicode的规则进行排序和比较，其排序规则为了处理一些特殊字符，实现更加复杂。
+
+  现在基本没有理由继续使用 `utf8mb4_general_ci` 了，因为其带来的性能差异很小，远不如更好的数据设计，比如使用索引等等。
+
+### 索引
+
+- 普通索引
+
+  ```mysql
+  CREATE INDEX `idx_字段名` ON `表名` (字段名) [COMMENT '注释'];
+  ```
+
+- 唯一索引
+
+  ```mysql
+  CREATE UNIQUE INDEX `uk_字段名` ON `表名` (字段名) [COMMENT '注释'];
+  ```
+
+### 外键
+
+- 概念
+
+  创建外键关系, 会默认创建一个对应的索引
+
+- 语法
+
+  ```mysql
+  -- 建表和改表都是这个语法
+  [CONSTRAINT [symbol]] FOREIGN KEY
+      [index_name] (col_name, ...)
+      REFERENCES tbl_name (col_name,...)
+      [ON DELETE RESTRICT]
+      [ON UPDATE RESTRICT]
+  ```
+
+- 样例
+
+  ```mysql
+  ALTER TABLE `attachment` ADD CONSTRAINT fk_attachment_attachment_type_id FOREIGN KEY (attachment_type_id) REFERENCES `attachment_type` (id) [ON DELETE RESTRICT] [ON UPDATE RESTRICT];
+  ```
+
+- 其他
+
+  存在外键关系的表，在插入更新数据时，会检查相应的外键关系，如果在大数据量且确定数据是正确的情况下，可以暂时关闭这个检查以提高性能
+
+  ```mysql
+  SET FOREIGN_KEY_CHECKS = 0;
+  ```
+
+## 触发器
+
+- 语法
+
+  ```mysql
+  CREATE
+      [DEFINER = user]
+      TRIGGER trigger_name
+      trigger_time trigger_event
+      ON tbl_name FOR EACH ROW
+      [trigger_order]
+      trigger_body
+  
+  trigger_time: { BEFORE | AFTER }
+  
+  trigger_event: { INSERT | UPDATE | DELETE }
+  
+  trigger_order: { FOLLOWS | PRECEDES } other_trigger_name
+  
+  -- 自定义的规范
+  trigger_name：tri_${trigger_time}_${trigger_event}_表名
+  ```
+
+- 样例
+
+  ```mysql
+  -- NEW 是关键字
+  CREATE TRIGGER trig_ranking_type_ord_no
+  BEFORE INSERT ON 表
+      FOR EACH ROW
+      IF (NEW.字段N IS NULL OR NEW.字段N = 0) THEN
+          SET NEW.字段N = (SELECT ifnull(max(字段N), 0) + 1 FROM 表 WHERE pid = NEW.pid);
+      END IF
+  ;
+  ```
+
+## 存储过程
+
+**简介**
+
+​	Stored Procedure 是一种在数据库存储复杂程序，以便外部程序发调用的一种数据库对象，MySQL 5.0 开始支持。其实本质上就是为了完成特定功能的 SQL 语句集，经编译创建并保存在数据库中，用户可通过指定存储过程的名字并给定参数来调用执行。其实，存储过程，就是数据库层面的代码封装和重用
+
+**优点**：存储过程可以封装并隐藏复杂的商业逻辑；可以回传值，接收参数，就像调用函数方法一样
+
+**缺点**：存储过程往往定制化于特定的数据库上，因为支持的编程语言不同，切换其他厂商的数据库系统时，需要重写原有的存储过程；存储过程的性能调校，受限于各种数据库系统
+
+**创建**
+
+```mysql
+-- 修改默认的语句结束符号（默认是分号“;”）
+-- 这样过程体中使用的分号被直接传递到服务器，而不会被客户端（如mysql）解释
+delimiter $$
+```
+
+```mysql
+CREATE
+	-- 标注（非必须）：标记作者，后面的“@`%`”也没有特殊含义，顺带把连接权限标注了
+    DEFINER = 用户名@`%`
+    -- 存储过程名：存储过程命名推荐采用“小写下划线隔开”的风格
+    -- 参数详解（非必须）：[IN|OUT|INOUT] 参数名 类型
+    PROCEDURE 存储过程名(参数)
+    RETURN 类型
+    COMMENT '备注'
+
+-- 存储过程体定义
+BEGIN
+　　-- 声明变量：DECLARE 变量名 类型 DEFAULT 默认值;
+　　-- 定义 CTE：WITH xxx AS (SELECT ... FROM ...), xxx2 AS (SELECT ... FROM ...), ...
+END 第一条语句声明的结束符号
+
+
+-- 拓展：
+-- 存储过程体的 BEGIN...END 是可以嵌套的，举一个三层的例子
+-- 每个嵌套块及其中的每条语句，必须以分号结束；表示过程体结束的则不需要
+-- DECLARE 声明的变量只在声明所在的 BEGIN...END 层中有效
+label1: BEGIN
+　　label2: BEGIN
+　　　　label3: BEGIN
+　　　　　　statements;
+　　　　END label3;
+　　END label2;
+END label1
+```
+
+```mysql
+-- 恢复默认的语句结束符号
+delimiter ;
+```
+
+默认情况下，存储过程和默认数据库相关联，如果想要希望存储过程创建在指定的数据库下，存储过程的名字应该以数据库名作前缀
+
+**调用**
+
+```mysql
+-- 方括号代表非必须
+CALL 存储过程名[(参数1, 参数2, ...)]
+```
+
+**参数**
+
+- 入参 IN
+
+  ```mysql
+  mysql> delimiter $$
+  mysql> create procedure in_param(in p_in int)
+      -> begin
+      -> 　　select p_in; -- ①1
+      -> 　　set p_in=2;
+      -> 　　select P_in; -- ②2
+      -> end$$
+  mysql> delimiter ;
+  
+  mysql> set @p_in=1;
+  mysql> call in_param(@p_in);
+  mysql> select @p_in; -- ③1
+  ```
+
+  ③值没改，因为上例中存储过程的变量是局部变量，@p_yin 则是全局变量
+
+- 出参 OUT
+
+  ```mysql
+  mysql> delimiter //
+  mysql> create procedure out_param(out p_out int)
+      ->   begin
+      ->     select p_out; -- ①NULL
+      ->     set p_out=2;
+      ->     select p_out; -- ②2
+      ->   end
+      -> //
+  mysql> delimiter ;
+   
+  mysql> set @p_out=1;
+  mysql> call out_param(@p_out);
+  mysql> select @p_out; -- ③2
+  ```
+
+  ②值为NULL，是因为 out 类型是向调用者输出参数，不接收输入的参数，只用作将结果携带出去
+
+- 兼备 INOUT（不推荐使用）
+
+  ```mysql
+  mysql> delimiter $$
+  mysql> create procedure inout_param(inout p_inout int)
+      ->   begin
+      ->     select p_inout; -- ①1
+      ->     set p_inout=2;
+      ->     select p_inout; -- ②2
+      ->   end
+      -> $$
+  mysql> delimiter ;
+  
+  mysql> set @p_inout=1;
+  mysql> call inout_param(@p_inout);
+  mysql> select @p_inout; -- ③2
+  ```
+
+  调用了inout_param存储过程，接受了输入的参数，也输出参数，改变了变量
+
+**操作**
+
+- 查
+
+  ```mysql
+  -- 方式一
+  SELECT routine_name FROM information_schema.routines WHERE routine_schema='数据库名';
+  -- 方式二
+  SHOW PROCEDURE STATUS WHERE db='数据库名';
+  ```
+
+  ```mysql
+  -- 详情
+  SHOW CREATE PROCEDURE `数据库`.`存储过程名`;
+  ```
 
 ## 语法
 
 ### NULL
 
 ​	对 `NULL` 进行任何操作返回的都是 `NULL`，作为判定条件的话也等同于`FALSE`，所以基本操作如：`!=`、`=`、`IN`、`NOT IN` 都会过滤掉 `NULL` 的值
+
+​	确定要对字段的 NULL 进行比较筛选，应该使用 `IS NULL` 和 `IS NOT NULL`
 
 ### NOT
 
@@ -435,7 +725,7 @@ CASE 字段名
   [ELSE 语句]
 END
   
--- 作为执行计划中的逻辑结构
+-- 作为存储过程中的逻辑结构
 CASE 字段名
   WHEN '字段值/布尔表达式' THEN 语句;
   WHEN '字段值/布尔表达式' THEN 语句;
@@ -445,7 +735,7 @@ END CASE;
 ```
 
 1. 根据不同的条件统计数量，`SUM(CASE … THEN 1 ELSE 0)`
-2. `CASE WHEN`本质上就是根据条件将返回的字段或者值拼接回sql语句，所以不仅是查询中，update等语句都可以使用
+2. `CASE WHEN`本质上就是根据条件将返回的字段或者值拼接回 sql 语句，所以不仅是查询中，update等语句都可以使用
 3. 使用简单Case函数，想要对字段空和非空判断，不能在WHEN后面的‘字段值’不能是 `NULL` 或是 `NOT NULL`，虽然语法上没错，但是`WHEN NULL`和`WHEN NOT NULL`总是返回 `unknow`，所以正确的方式应该是采用Case搜索函数的 `字段 IS NULL` 或 `字段 IS NOT NULL`
 
 ### WHILE
@@ -495,7 +785,22 @@ end loop;
 
 Common Table Expression
 
+**语法**
+
+```mysql
+-- RECURSIVE 关键字：A CTE can refer to itself to define a recursive CTE. Common applications of recursive CTEs include series generation and traversal of hierarchical or tree-structured data.
+-- 翻译：CTE可以引用自身来定义递归CTE。递归CTE的常见应用包括 序列生成 和 遍历分层或树状数据。
+-- 注意：REVURSIVE CTE 中一定要包含 UNION 关键字 
+with_clause:
+    WITH [RECURSIVE]
+        cte_name [(col_name [, col_name] ...)] AS (subquery)
+        [, cte_name [(col_name [, col_name] ...)] AS (subquery)] ...
 ```
+
+**样例**
+
+```mysql
+-- 定义
 WITH xxx1 AS (
     select * from table1 where ...
 ),
@@ -506,7 +811,25 @@ xxx2 AS (
 xxxn AS (
 	SELECT * FROM tablen
 )
-SELECT xxx1.a, xxx2.b, xxx3.c....（你的SQL）
+
+-- 执行（只有执行了，CTE 中的 sql 才会执行）
+SELECT xxx1.a, xxx2.b, xxx3.c....
+```
+
+**实例**
+
+> 参见官方 https://dev.mysql.com/doc/refman/8.0/en/with.html#common-table-expressions-recursive-examples
+
+```mysql
+-- 定义递归 CTE，实现每次插入 2 的 n 次幂的数据
+WITH RECURSIVE `cte` AS
+(
+  SELECT 1 AS id, 1 AS sum
+  UNION ALL
+  SELECT id + 1, sum + sum FROM `cte` WHERE id < 10
+)
+
+SELECT * FROM cte;
 ```
 
 ## 连接
@@ -667,11 +990,11 @@ WHERE a.b_id = b.id
 - 设置
 
   ```mysql
-  # 方式1
+  -- 方式1
   SET @变量名 = "变量值";
-  # 方式2
+  -- 方式2
   SELECT '变量值' INTO @变量名;
-  # 方式3
+  -- 方式3
   SELECT @变量名 := '变量值';
   ```
 
@@ -952,146 +1275,6 @@ SHOW STATUS LIKE 'innodb_row_lock%'
 ​	执行 SELECT ... WHERE `id`= 1 FOR UPDATE，就是一个简单的条件查询并加上了排他锁（就是锁本质上就是锁索引）
 
 ​	针对这个锁的级别是行锁还是表锁是取决于查询条件的列上是否有索引，有则行级别的锁，无则表锁（可以通过开启多个会话同时对一张表继续操作，观察阻塞现象来验证）
-
-## 存储过程
-
-**简介**
-
-​	Stored Procedure 是一种在数据库存储复杂程序，以便外部程序发调用的一种数据库对象，MySQL 5.0 开始支持。其实本质上就是为了完成特定功能的 SQL 语句集，经编译创建并保存在数据库中，用户可通过指定存储过程的名字并给定参数来调用执行。其实，存储过程，就是数据库层面的代码封装和重用
-
-**优点**：存储过程可以封装并隐藏复杂的商业逻辑；可以回传值，接收参数，就像调用函数方法一样
-
-**缺点**：存储过程往往定制化于特定的数据库上，因为支持的编程语言不同，切换其他厂商的数据库系统时，需要重写原有的存储过程；存储过程的性能调校，受限于各种数据库系统
-
-**创建**
-
-```mysql
--- 修改默认的语句结束符号（默认是分号“;”）
--- 这样过程体中使用的分号被直接传递到服务器，而不会被客户端（如mysql）解释
-delimiter $$
-```
-
-```mysql
-CREATE
-	-- 标注（非必须）：标记作者，后面的“@`%`”也没有特殊含义，顺带把连接权限标注了
-    DEFINER = 用户名@`%`
-    -- 存储过程名：存储过程命名推荐采用“小写下划线隔开”的风格
-    -- 参数详解（非必须）：[IN|OUT|INOUT] 参数名 类型
-    PROCEDURE 存储过程名(参数)
-    RETURN 类型
-    COMMENT '备注'
-
--- 存储过程体定义
-BEGIN
-　　-- 声明变量：DECLARE 变量名 类型 DEFAULT 默认值;
-　　-- 定义 CTE：WITH xxx AS (SELECT ... FROM ...), xxx2 AS (SELECT ... FROM ...), ...
-END 第一条语句声明的结束符号
-
-
--- 拓展：
--- 存储过程体的 BEGIN...END 是可以嵌套的，举一个三层的例子
--- 每个嵌套块及其中的每条语句，必须以分号结束；表示过程体结束的则不需要
--- DECLARE 声明的变量只在声明所在的 BEGIN...END 层中有效
-label1: BEGIN
-　　label2: BEGIN
-　　　　label3: BEGIN
-　　　　　　statements;
-　　　　END label3;
-　　END label2;
-END label1
-```
-
-```mysql
--- 恢复默认的语句结束符号
-delimiter ;
-```
-
-默认情况下，存储过程和默认数据库相关联，如果想要希望存储过程创建在指定的数据库下，存储过程的名字应该以数据库名作前缀
-
-**调用**
-
-```mysql
--- 方括号代表非必须
-CALL 存储过程名[(参数1, 参数2, ...)]
-```
-
-**参数**
-
-- 入参 IN
-
-  ```mysql
-  mysql> delimiter $$
-  mysql> create procedure in_param(in p_in int)
-      -> begin
-      -> 　　select p_in; -- ①1
-      -> 　　set p_in=2;
-      -> 　　select P_in; -- ②2
-      -> end$$
-  mysql> delimiter ;
-  
-  mysql> set @p_in=1;
-  mysql> call in_param(@p_in);
-  mysql> select @p_in; -- ③1
-  ```
-
-  ③值没改，因为上例中存储过程的变量是局部变量，@p_yin 则是全局变量
-
-- 出参 OUT
-
-  ```mysql
-  mysql> delimiter //
-  mysql> create procedure out_param(out p_out int)
-      ->   begin
-      ->     select p_out; -- ①NULL
-      ->     set p_out=2;
-      ->     select p_out; -- ②2
-      ->   end
-      -> //
-  mysql> delimiter ;
-   
-  mysql> set @p_out=1;
-  mysql> call out_param(@p_out);
-  mysql> select @p_out; -- ③2
-  ```
-
-  ②值为NULL，是因为 out 类型是向调用者输出参数，不接收输入的参数，只用作将结果携带出去
-
-- 兼备 INOUT（不推荐使用）
-
-  ```mysql
-  
-  mysql> delimiter $$
-  mysql> create procedure inout_param(inout p_inout int)
-      ->   begin
-      ->     select p_inout; -- ①1
-      ->     set p_inout=2;
-      ->     select p_inout; -- ②2
-      ->   end
-      -> $$
-  mysql> delimiter ;
-  
-  mysql> set @p_inout=1;
-  mysql> call inout_param(@p_inout);
-  mysql> select @p_inout; -- ③2
-  ```
-
-  调用了inout_param存储过程，接受了输入的参数，也输出参数，改变了变量
-
-**操作**
-
-- 查
-
-  ```mysql
-  -- 方式一
-  SELECT routine_name FROM information_schema.routines WHERE routine_schema='数据库名';
-  -- 方式二
-  SHOW PROCEDURE STATUS WHERE db='数据库名';
-  ```
-
-  ```mysql
-  -- 详情
-  SHOW CREATE PROCEDURE `数据库`.`存储过程名`;
-  ```
 
 ## 其他
 
