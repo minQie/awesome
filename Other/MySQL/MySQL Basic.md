@@ -16,7 +16,7 @@
 
 - 引擎层
 
-  第三层存储引擎，存储引擎真正的负责了MySQL中数据的存储和提取，服务器通过API与存储引擎进行通信。不同的存储引擎具有的功能不同，这样我们可以根据自己的实际需要进行选取
+  第三层存储引擎，存储引擎真正的负责了 MySQL 中数据的存储和提取，服务器通过API与存储引擎进行通信。不同的存储引擎具有的功能不同，这样我们可以根据自己的实际需要进行选取
 
 - 存储层
 
@@ -52,13 +52,13 @@
 
 - 查看表的
 
-  `SHOW CREATE TABLE 'TABLEname';`
-  `SHOW TABLE status like 'TABLEname';`
-  `SHOW TABLE status from database where name="TABLEname";`
+  `SHOW CREATE TABLE '表名';`
+  `SHOW TABLE STATUS LIKE '表名';`
+  `SHOW TABLE STATUS FROM '数据库名' WHERE NAME='表名';`
 
 - 修改表的
 
-  `ALTER TABLE t ENGINE = InnoDB;`
+  `ALTER TABLE <table_name> ENGINE = InnoDB;`
 
 - 修改默认的
 
@@ -260,13 +260,13 @@
   ALTER TABLE `表名` ADD [COLUMN] `列名` VARCHAR(10) NOT NULL UNIQUE DEFAULT 'XXX' COMMENT 'XXX' [AFTER `列名`] | [FIRST];
   ```
 
-- 改（全改）
+- 改（全改）- 改名 Navicat 默认用 CHANGE
 
   ```MySQL
   ALTER TABLE `表名` CHANGE [COLUMN] `旧列名` `新列名` VARCHAR(10) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' DEFAULT 'XXX' COMMENT 'XXX' [AFTER `列名`] | [FIRST];
   ```
 
-- 改（全改 - 除列名）
+- 改（全改 - 除列名）- 否则 Navicat 默认用 MODIFY
 
   ```MySQL
   ALTER TABLE `表名` MODIFY [COLUMN] `列名` VARCHAR(10) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL DEFAULT 'XXX' COMMENT 'XXX' [AFTER `列名`] | [FIRST];
@@ -465,6 +465,12 @@ TEXT
 
   ```mysql
   CREATE UNIQUE INDEX `uk_字段名` ON `表名` (字段名) [COMMENT '注释'];
+  ```
+
+- 全文索引
+
+  ```mysql
+  CREATE FULLTEXT INDEX `idx_full_字段名` ON `表名` (字段名) [COMMENT '注释'] WITH PARSER NGRAM;
   ```
 
 ### 外键
@@ -816,7 +822,7 @@ xxxn AS (
 SELECT xxx1.a, xxx2.b, xxx3.c....
 ```
 
-**实例**
+**Recursive CTE 样例**
 
 > 参见官方 https://dev.mysql.com/doc/refman/8.0/en/with.html#common-table-expressions-recursive-examples
 
@@ -831,6 +837,8 @@ WITH RECURSIVE `cte` AS
 
 SELECT * FROM cte;
 ```
+
+Recursive CTE 的 UNION 关键字的下半部分是递归的核心也是递归结束条件的核心，要注意对 Recursive CTE 进行 LEFT JOIN 时一定得有条件限制否则很容器导致死递归
 
 ## 连接
 

@@ -1,326 +1,484 @@
-# Git
+## 说明
 
-## 远程仓库认证、鉴权
+**标记符**
 
-​	这里先做一个概念的澄清说明，拿 GitHub 来举例说明，GitHub 作为代码仓库，也就是作为本地代码的远程仓库。一般仓库有两种类型，一个是公共，默认所有用户都有拉取代码的权限（就也是说不要在这种仓库放置任何敏感信息），但是想要为代码仓库共享代码，就需要仓库的管理负责人审批。一个是私有，默认所有用户没有仓库的任何权限。但是作为仓库的创建者、拥有者，又或者是经过授权认证的账号是可以仓库的各种权限的。远程仓库的鉴权，核心就两点：
+关于文档中的一些标记符做一下说明，标识符定义是参照 MySQL、Git 的官方文档的特殊字符含义定义的
 
-1. **账户具有仓库的权限**：由仓库负责人在 GitHub 管理平台上操作，通过 HTTPS 协议访问远程仓库，默认就是采用这种方式
-2. **当前访问仓库的是这个账户，而不是别的账户**，有两种认证方式，第一种通过用户名和密码，第二种是你拥有指定公钥对应的私钥，账号密码在 Windows 操作上和上面提到的系统凭据相关；密钥对的概念就是，每个 GitHub 账户可以创建设置多个密钥对，然后将密钥对的所有密钥对的公钥配置到 GitHub 账号的 [SSH and GPG keys](https://github.com/settings/keys)，那么只要PC端拥有与任意一个公钥对应的私钥，就被认为是相应的账户在操作。通过 SSH 协议访问远程仓库，默认就是这种方式
+`""`、`<>`：参数，代表命令的动态参数
 
-​	如果你不想让别人看到 Git 库，有两个办法，一个是交点保护费，让 GitHub 把公开的仓库变成私有的，这样别人就看不见了，不可读更不可写（这是早期的说法，GitHub 为了推崇开源精神，才做成申请私有仓库是要收费的，到了现在，GitHub 已经没有相关限制了）；另一个办法是自己动手，搭一个Git服务器，因为是你自己的Git服务器，所以别人也是看不见的，公司内部开发必备
+`[]`：可选参数，代表命令中，该内容可有可无
 
-## 认证方式
+`()`：等效替代的意思
 
-GitHub 任何仓库的访问地址，都有如下两种方式：
+**名词**
+
+仓库 = 版本库 = 代码库 = 项目目录
+
+`git commit -m "提交注释"` 的 提交注释 = message
+
+**分支名**
+
+GitHub 在某个时间节点，因种族歧视的缘由，将默认的主分支名由 master 改为了 main，本文的内容都是采用 master
+
+## 概念
+
+### 基础
+
+git 不会跟踪文件夹
+
+### 区域
+
+`工作区` ←→ `贮藏区`
+
+`暂存区`
+
+`版本库`
+
+这张图能够很形象的将文件在不同区域内的转移说清楚
+
+![image-20210108085605428](Git.assets/image-20210108085605428.png)
+
+## 配置
+
+### 级别
+
+通过直接输入 `git config` 命令，可以了解到 git 针对配置项一共有 3 种级别：
+
+`system`：所有用户、所有项目，对应
+
+```
+Linux /etc/gitconfig
+Win   C:\Program Files\Git\mingw64\etc\gitconfig
+```
+
+`global`：当前登录的用户，对应
+
+```
+Linux ~/.gitconfig
+Win   C:\Users\xxx\.gitconfig
+```
+
+`local`：本地级别，也就是具体的某个git仓库，对应 `仓库目录/.git/config`
+
+### 常用命令
+
+查看所有配置：`git config [--local|--global|--system] -list(-l)`
+
+增：`git config --add <name> <value>`
+改：`git config <name> <value>`
+删：`git config --unset <name>`
+删：`git config --unset-all <name>`
+查：`git config --get <name>`
+查：`git config --get-all <name>`
+查：`git config get-regexp <name-regex>`
+
+### 常用配置
+
+语法高亮：`git config --global color.ui true`
+配置别名：`git config --global alias.别名 "原名"`（单个单词可以省略引号）
+用户名邮箱：
+
+```
+git config --global user.name "Your Name"
+git config --global user.email "email@example.com"
+```
+
+### 忽略文件
+
+> 常见的忽略文件模板，可参见 https://github.com/github/gitignore/branches/all
+
+项目中有些文件，我们并不会将其提交到远程仓库，如无用的日志文件、开发工具的配置文件、项目重要的配置文件、体积较大的项目编译产物等等，但是每次通过 `git status` 命令查看仓库状态时，总是会显示 `Untracked files ...`，这时就需要指定一些忽略规则，让 git 放弃追踪这些文件
+
+`.gitignore` 中配置的文件类型，是无法添加到暂存区的，但是可以通过 `-f` 参数来强行添加
+
+`.gitignore` 文件本身要放到版本库里，并且可以对 `.gitignore` 做版本管理
+
+**相关命令**
+
+`git check-ignore`：提示你哪行配置的规则不允许添加该文件
+
+### 文件脱离版本管理
+
+`git rm --cached <file>`：想要删除版本库中的一个文件，但是不删除本地的文件
+
+（已经被 git 管理的文件，在后边补上 `.gitignore` 的规则是没用的，这时就需要用到该命令）
+
+## 基础命令
+
+创建本地仓库：`git init`
+
+查看本地仓库状态：`git status`
+
+### 工作区 → 暂存区
+
+`git add <file>...`
+`git add -u`：文件的修改、删除，添加到暂存区
+`git add .`：文件的修改、新建，添加到暂存区
+`git add -A`：文件的修改、删除、新建，添加到暂存区
+
+### 工作区 → 仓库
+
+`git commit -am "提交说明"`
+
+### 暂存区 → 工作区
+
+`git restore --staged <file>...`
+
+### 暂存区 → 仓库
+
+`git commit -m "提交说明"`
+
+### 比对工作区和暂存区
+
+`git diff`
+（会出现 a b 作为区分）
+
+### 比对暂存区和HEAD
+
+`git diff HEAD [--] <file1> ...`
+（如果同时工作区也存在文件的改动，那么比对的将是工作区和HEAD）
+
+### 丢弃工作区和暂存区
+
+`git checkout HEAD [--] <file1> <file2> ...`
+
+（还原工作区和暂存区）
+
+### 丢弃工作区
+
+`git checkout [--] <file1> <file2> ...`
+
+（保留暂存区）
+
+### 丢弃暂存区
+
+`git reset <HEAD> [--] <file1> <file2> ...`
+
+（保留工作区）
+
+### 查看提交历史
+
+`git log`
+
+`git reflog`（删除的都可以看）
+
+参数：
+`--pretty=oneline（--oneline）`：查看简洁的提交
+`-n数字`：查看近几次的提交
+`--graph`：带上同 GUI 的提交分支之间的演进历史，分支信息
+`-all`：查看所有分支，不限于当前分支，添加该参数，指定分支查看失效
+
+## 远程仓库
+
+### 概念
+
+1. 仓库命令是针对仓库的，必须在 git 仓库下运行该命令
+2. 无论是推送至远程库，还是克隆拉取远程库，都是要先有远程仓库的
+3. 一个本地仓库可以对应多个远程仓库
+4. 远程仓库的名称操作是本地的，局部定义的概念
+
+### 常用命令
+
+`git remote add <本地自定义的远程仓库名> https://github.com/xxx/xxx.git`：关联远程仓库
+`git remote -v`：查看已关联的远程仓库（如果没有推送权限，那么肯定没有 push 的地址）
+`git remote rename <oldName> <newName>`：重命名远程仓库
+`git remote rm <name>`：删除已关联的远程仓库
+
+**推(push)**
+
+`git push -u <本地自定义的远程仓库名> <分支名>`
+
+远程库是空的，第一次推送 master 分支时，需要加上-u 参数，这样，Git不但会把本地的 master 分支内容推送的远程新的 master 分支，还会把本地的 master 分支和远程的 master 分支关联起来
+
+没有关联远程仓库，也不加 -u 参数就推送，会得到如下提示：
+
+```
+fatal: The current branch master has no upstream branch.
+To push the current branch and set the remote as upstream, use
+
+git push --set-upstream origin master
+```
+
+**拉(pull、clone)**
+
+`git clone git@github.com:xxx/xxx.git`
+
+当你从远程仓库克隆时，实际上 Git 自动把本地的 master 分支和远程的 master 分支对应起来了，并且远程仓库的默认名称是 origin
+
+第一次使用 Git 的 clone 或者 push 命令连接 GitHub 时，会得到一个警告：
 
 ```markdown
-# 基于 HTTPS 协议
-https://github.com/minQie/xxx.git
-# 基于 SSH 协议
-git@github.com/minQie/xxx.git
+The authenticity of host 'github.com (xx.xx.xx.xx)' can't be established.
+RSA key fingerprint is xx.xx.xx.xx.xx.
+Are you sure you want to continue connecting (yes/no)?
+
+这是因为 Git 使用 SSH 连接，而SSH连接在第一次验证 GitHub 服务器的 Key 时，需要你确认 GitHub 的 Key 的指纹信息是否真的来自 GitHub 的服务器，输入 yes 回车即可
+（校验可以通过查看：https://help.github.com/en/articles/githubs-ssh-key-fingerprints）
 ```
 
-通过 SSH 支持的原生 Git 协议速度最快的，使用 HTTPS 除了速度慢一些以外，还有个最大的麻烦是每次推送都必须输入口令，但是在某些只开放 HTTP 端口的公司内部就无法使用 SSH 协议而只能用 HTTPS
+## 操作实例
 
-### HTTPS
+### 删除文件
 
-​	通过账号密码的方式，Windows 平台下，和凭据管理有直接关系
+**方式一**
 
-- **每次都要输入账号和密码的解决方案**
+1. `git rm <file>`：物理删除文件，并将文件删除这个改动添加到暂存区
 
-  If you're [cloning GitHub repositories using HTTPS](https://docs.github.com/github/using-git/which-remote-url-should-i-use), you can use a credential helper to tell Git to remember your credentials.
+2. `git reset HEAD <file>`、`git checkout -- <file>` 取消删除
 
-  ```markdown
-  git config --global credential.helper manager
-  # 官网说是下面这个命令，上面的也试一下
-  git config --global credential.helper wincred
-  ```
+   `git commit -m ""` 确认删除
 
-  核心就是上面的命令，效果就是，会在 `C:\Users\用户名\.gitconfig` 文件中添加如下一段配置
+**方式二**
 
-  ```
-  [credential]
-  	helper = manager
-  ```
+1. `rm <file>`：物理删除文件
 
-  下次，输入用户名和密码后，会在生成一个 `C:\Users\用户名\.git-credentials`，里面记录的就是用户名密码
+2. `git checkout -- <file>`：取消删除
 
-- **系统凭据（Windows）**
+   `git add/rm <file>` → `git commit -m ""`：确认删除
 
-  凭据管理器是 Windows 系统的一个系统组件，能够帮助用户完成本地访问时的认证工作。当用户第一次输入用户名和密码的时候，凭证管理器可以将这些访问凭据(用户、密码、证书等)保存在本地，再次访问该服务器站点时，Windows 系统会自动完成凭据的认证过程。有 Web 凭据、Windows 凭据（Windows 远程连接）、普通凭据（这是本篇的重点，微软账号、GitHub 账号等）
+   对于文件删除改动，是有工作区概念的
 
-- 如何访问
+### 移动文件（重命名）
 
-  方式一：`控制面板 → 用户账户 → 凭据管理器 → 普通凭据`
+例如，将当前目录下所有文件移动到当前目录的上一级目录：`git mv * ../`
 
-  方式二：`rundll32.exe keymgr.dll,KRShowKeyMgr`
+提交：`git commit -m "移动了文件"`
 
-### SSH
+直接通过 mv 命令或者操作移动，工作区会提示文件删除和新文件的增加，但是提交到暂存区，git 会识别到重命名
 
-- 密钥对概念
+### 解决冲突
 
-  在操作系统本地通过相关命令，将生成的秘钥对的公钥配置到远程仓库平台的账户，拥有配对的私钥的电脑就能访问账户下的所有仓库，又或者说 GitHub 需要识别出你推送的提交确实是你推送的，而不是别人冒充的，而 Git 支持 SSH 协议，所以，GitHub 只要知道了你的公钥，就可以确认只有是你自己推送的
+如果在你提交并推送之前，已经有人提交了且推送了，就会推送失败，因为小伙伴最的新提交和你试图推送的提交有冲突，如何解决，其实 Git 都有提示：
 
-  如果生成秘钥时指定了密码（passphrase），那么发起连接时，在私钥和公钥校验之前，还需要输入密码（passphrase）。实际的化，输入指令后，一直回车下去就行，没必要设置密码，如果设置了，那么在通过秘钥各种场景的连接，还需要输入该密码，是否指定密码的实际效果如下
+1. 先用 `git pull` 把最新的代码从远程仓库 pull 下来
+2. 如果失败了，原因是没有指定本地 dev 分支与远程 origin/dev 分支的关联，根据提示，设置 dev 和 origin/dev 的链接：
+   `git branch --set-upstream-to=origin/dev dev`
 
-  - 生成秘钥时的“Enter passphrase for key”直接回车
+3. 在本地解决冲突，再推送
 
-  ![image-20201102195702063](Git.assets/image-20201102195702063.png)
+### 版本回退
 
-  - 生成秘钥时的“Enter passphrase for key”输入了
+结合三大区域的概念图，这里重点说一下 `git reset` 命令
 
-  ![image-20201102195714822](Git.assets/image-20201102195714822.png)
+一次提交：`git reset --<model> HEAD^`
+两次提交：`git reset --<model> HEAD^^`
+n次提交：`git reset --<model> HEAD~n`
+指定版本：`git reset --<model> <commitid>`
 
-  
+**model**
 
-  - Windows 下可以参考如下命令
+`soft`
 
-  ```bash
-  ssh-keygen -t "rsa" -f "C:\Users\用户名\.ssh\xxx_rsa" -C "1459049487@qq.com"
-  # 查看命令帮助
-  ssh-keygen --help
-  ```
+指定的提交：撤销到暂存区
+工作区：不变
+暂存区：不变
 
-  - 在linux使用 `ssh-keygen` 命令失败的解决办法
+`mix`
 
-  ```shell
-  # 查看服务是否开启
-  systemctl status sshd
-  # 启动服务
-  systemctl start sshd
-  ```
+指定的提交：撤销到工作区
+工作区：不变
+暂存区：撤销到工作区
 
-  Linux 操作系统下，密钥对文件默认生成到 `~/.ssh（即/root/.ssh）`，Windows 操作系统下，密钥对文件默认生成到 `C:\Users\用户名\.ssh`。生成的密钥对文件，`id_rsa` 是私钥文件，`id_rsa.pub` 是公钥文件（公钥加密的数据，你可以用私钥解密）。就是这个路径和文件名是有讲究的，如果你修改了，Git 就找不到了，如果修改了也是可用通过配置让 Git 找到的
+`hard`
 
-  - Windows
+指定的提交：丢弃
+工作区：新增丢弃、改动丢弃
+暂存区：新增保留、改动丢弃
 
-  ```
-  文件（不存在就创建）：
-  C:\Users\用户名\.ssh\config
-  
-  添加如下内容：
-  Host github.com
-  HostName github.com
-  PreferredAuthentications publickey
-  IdentityFile C:\Users\用户名\.ssh\my_laptop_rsa
-  ```
+### 撤销提交
 
-  - Linux
+`git revert <commitid>`
 
-  ```
-  文件（不存在就创建）：
-  /etc/ssh/ssh_config
-  
-  添加如下内容：
-  Host github.com
-  HostName github.com
-  PreferredAuthentications publickey
-  IdentityFile ~/.ssh/my_laptop_rsa
-  ```
+这个命令的原理很简单就是说假如记一次变动为 A → B，那么该命令就是产生一个还原变动 B → A，即会产生一个新的提交
 
-  - 配置解释
+使用该命令，提交时会产生一个默认 message，推荐使用，不要去修改
 
-  ```markdown
-  - Host
-  Host 配置项的值会影响 git 相关命令，例如：
-  Host mygithub 这样定义的话，命令如下，即 git@ 后面紧跟的名字改为 mygithub
-  git clone git@mygithub:minQie/xxx.git
-  ```
+### 修改提交注释
 
-  假定你有若干电脑，你一会儿在公司提交，一会儿在家里提交，只要把每台电脑的 Key 都添加到 GitHub，就可以在每台电脑上往 GitHub 推送了。类比到实际多人合作开发也是这样的，但是注意，不是说主账户创建多个密钥对，然后把私钥发别人，而是说谁想要加入，就应该自己创建密钥对，然后把公钥发给仓库创建主账户，主账户把公钥配置上就可以了
+`git commit –-amend`
 
-  ```
-  # GitHub 配置步骤大概如下
-  Settings（Personal setting） -> SSH and GPG Keys -> New SSH key -> Title随意、 Key填入公钥
-  ```
+最新一次的提交内容撤回到暂存区；
+进入用户交互（文本编辑）界面，可以修改（i）提交注释；在交互界面，执行保存时（:wq），会将修改后的暂存区内容以及新的注释替换该次的提交
+（想要进行添加、修改文件的修改，经过测试，需要在执行该命令之前做好改动，并且将改动添加到暂存区）
 
-## 远程仓库冲突
+### 修改提交
 
-​	本篇提到的远程仓库，都是指 GitHub，这里引出 `多` 的概念，就再提一个 Gitee，GitHub 和 Gitee 都是功能比较完善的代码仓库平台，但是，在国内码云的代码拉取和推送速度远大于 GitHub
+**方式一**
 
-​	比如说将本地仓库和一个远程仓库关联起来：`git remote add origin https://gitee.com/minQie/tangjia.git`，然后你又想将该本地仓库与 Gitee 远程仓库关联起来，仅是简单的改一些命令的仓库地址是不行的。Git 的理念是分布式版本控制系统，可以同步到一个远程库，当然也可以同步到另外两个远程库。使用多个远程库，Git 给远程库起的默认名称是 origin，如果有多个远程库，我们需要用不同的名称来标识不同的远程库，具体：
+`git rebase -i <commitid>` 或者 `git rebase <commitid^> --interactive`
+（将HEAD指向 commitid 所在的提交）
 
-```
-git remote remove origin
-git remote add origin_gitee https://github.com/minQie/tangjia.git
-git remote add origin_github https://gitee.com/minQie/tangjia.git
-```
+假如要修改某提交的注释，上面的 commitid 就是该提交的上一次提交的 commitid
 
-### SSH
+此时进行具体的修改，可以修改提交的注释信息，可以修改提交的文件，还可以合并几次的提交为一次提交（将要被合并的提交前面的头由 `pick` 修改成 `s`，然后保存；每个 `s` 都会从自己开始，向老提交的方向找，找到离自己最近的 `pick` 进行合并，随后又进入一个编辑界面：添加这次合并的注释，即确定合并成的这一次提交的注释）
 
-​	上面的例子是说，基于两个不同的远程仓库平台，域名和协议开头都是不同的，使用中是能够清晰的区分，不会出现使用上的问题，但是如果是某一个平台的两个账号，就会遇到其中一个账号下的仓库对应的本地仓库拉取或推送代码发生错误，这里就不描述具体的问题场景了，从原理说清楚这里边的概念，当然，主要是围绕 SSH 协议展开来说
+修改注释前面的头，如 `pick` 修改为 `edit`（改成 `r` 也行）
 
-**原理**
+**方式二**
+
+`git rebase –continue`
+
+当前分支转移至HEAD处，和对应的远程分支分道扬镳，但从分叉处至该分支和对应的远程分支有相同的提交数
+执行这条命令之前，都可以通过 `git rebase --abort` 放弃修改
+
+使用注意：在有远程分支和多人开发的情况下，一定需要慎重，操作不好，可能直接导致他人的提交丢失
+
+### 提交复制
+
+`git cherry-pick <commitid> ...`
+
+将分支 A（指定 commitid 对应的分支）上的提交，复制到分支 B（执行命令时的当前分支）上也提交一份
+
+## 分支管理
+
+### 分支概念
+
+`master`：分支是主分支，dev 分支是开发分支，团队所有成员都需要在上面工作,因此都需要时刻与远程同步
+
+`bug`：分支只用于在本地修复bug，就没必要推到远程了，除非老板要看看你每周到底修复了几个bug
+
+`feature`：分支是否推到远程，取决于你是否和你的小伙伴合作在上面开发
+
+**删除未合并的分支**
+`git branch -d xxx`
 
 ```
-git@github.com:minQie/awesome.git
+error: The branch 'xxx' is not fully merged.
+If you are sure you want to delete it, run 'git branch -D xxx'
 ```
 
-那上面的例子来说，这是GitHub 上的一个远程仓库，基于 git 协议访问的连接地址，那么当本地在通过 git 相关命令尝试操作该仓库，GitHub 会有一个鉴权机制，核心就是 [SSH](#SSH) 中的密钥对，就是说这样的密钥对的私钥会有一个默认的存放路径和默认的文件名，操作系统会读取该文件，用于鉴权。就也是像里边描述的，如果你修改了，就需要对 `.ssh\config` 配置文件进行额外的修改和配置，核心就是这个 `config`  文件，也不难看出，**不同域名所需要的密钥文件的对应关系，就是在里边配置的**。所以如果我们有多个远程仓库平台或者一个平台的多个账号，就都需要在 `config` 文件里边进行配置区分，来看具体的例子
+一个分支做了修改（创建了结点），此时删除这个未合并的分支（指针），那修改就无法被访问到了，所以需要连同结点一起删除
 
-```markdown
-- 在 GitHub 平台上的两个账户 A 和 B
-https://github.com/A
-https://github.com/B
+`git branch -D xxx`
 
-- 本地创建了两对密钥（并且已经将公钥配置到了对应的 GitHub 账户下的 SSH keys）
-a_rsa a_rsa.pub
-b_rsa b_rsa.pub
+### 常用命令
 
-- config 文件应该这样配置
-Host A.github.com
-HostName github.com
-PreferredAuthentications publickey
-IdentityFile C:\Users\用户名\.ssh\a_rsa
+`git checkout -b <branchname> <远程仓库名>/<branchname>`：拉取分支
+`git pull <远程仓库名> <branchname>`：更新分支
+`git branch <branchname>`：创建分支
+`git checkout <branchname>`：切换分支
+`git checkout -b <branchname>`：创建并切换分支
 
-Host B.github.com
-HostName github.coma
-PreferredAuthentications publickey
-IdentityFile C:\Users\用户名\.ssh\b_rsa
+`git branch`：查看分支（当前分支前面会标一个*号）
+-v：附上分支最近的提交注释
+-a：远程分支也查看
 
-- 测试是否配置成功，除了实际本地仓库拉取推送代码，还可以通过下面的命令来检测
-ssh -T git@A.github.com（上面配置的 Host）
-ssh -T git@B.github.com
+`git branch -d <branchname>`：删除分支
+注意：不能删除当前所在的分支，需要切换到别的分支，再删除
 
-成功的话，会出现
-Hi A! You've successfully authenticated, but GitHub does not provide shell access.
-Hi B! You've successfully authenticated, but GitHub does not provide shell access.
+`git merge <branchname>`：将当前分支合并至指定分支
+大多数 GUI 中，都是将右键点击合并的分支，合并到当前分支
 
-- 现在账户A 下有名为 a 的仓库，账户B 下有名为 b 的仓库
-git@github.com:A/a.git
-git@github.com:B/b.git
+`git log --graph --pretty=oneline --abbrev-commit`：查看分支的合并情况
 
-就是这样的仓库地址，是 GitHub 按照默认规则 提供的，应该按照如下配置远程仓库地址才能将其和 config 文件的配置对应起来
-git@A.github.com:A/a.git
-git@A.github.com:B/b.git
+`git push <远程仓库名> <branchname>`：推送分支
+分支名是一一对应的，不存在本地仓库的分支名和远程仓库的分支名不相同的情况
 
-仓库是别人的，但你的账号具有相应的权限就没问题（假设 A 和 B 账户都具有 c 仓库的权限）
-git@A.github.com:C/c.git
-git@B.github.com:C/c.git
-```
+**分支管理策略**
 
-还有一点需要注意的，就是上例中，创建了两对密钥，你可能想，本地一个密钥对，本地留着密钥就行，然后将这个密钥对应的公钥配置到各个平台，平台的各个账户，不是最简单。实际上，GitHub 就有做唯一校验，所以单一平台的多个账户使用一个密钥对是不现实的
+在使用合并分支指令时，还可以指定 `--no-ff` 参数，这样可以取消默认的快速合并模式，而使用普通的模式进行合并。快速合并模式不会留下合并的历史消息，但是普通模式可以，普通模式的合并能看出来曾经做过合并。总之，如果要强制禁用 Fast forward 模式，Git 就会在 merge 时生成一个新的 commit，这样，从分支历史上就可以看出分支信息，而生成提交就需要使用“-m”参数，指定提交说明：
+`git merge --no-ff -m "merge with no-ff" <branchname>`
 
-### HTTPS
+## 贮存区
 
-​	每次重启电脑之后，SourceTree 访问 GitHub 的私有仓库，就显示找不到
+### 概念
 
-- 现象1：把 Windows 系统凭据管理的所有普通凭据删了，操作仓库，重新认证 → 可以访问
+假如当前正在一个分支上工作，突然要解决bug（假定需要在master分支上修复），那么一般的操作流程如下：
 
-- 现象2：把认证管理器存储的信息删除，操作仓库，重新认证 → 可以访问
+1. git stash
+2. 跳转到 master 分支
+3. 创建临时分支用于修复bug
+4. 修复后，跳转回 master 分支，合并修复 bug 分支
+5. 删除修复 bug 分支
+6. git stash pop
 
-  git credential-manager uninstall
+### 常用命令
 
-  git credential-manager install
+`git stash`：将工作区的内容放到贮存区
 
-- 现象总结：浏览器界面得放访问 GitHub，且是相关账号的登录状态；SourceTree 在远程仓库配置了正确的账号信息。满足这两个条件，才能正常拉取、推送代码
+`git stash apply`：应用储存区（将贮存区的内容还原到工作区）
+`git stash apply stash@{0}`
 
-- 现象3：在 SourceTree 账户管理界面中将 rankingcong 的账号信息设置为默认 → 可以访问
+`git stash drop`：删除贮存区
+`git stash pop`：应用并删除贮存区
+`git stash list`：查询贮存区文件
 
-**测试**
+## 标签管理
 
-​	为了下面描述简明，定义一个场景 `Clear`：一个本地仓库，仅设置好了对应的远程仓库地址（原来是一个能够正常推送、拉取等操作的本地仓库，系统操作删除了所有的凭据）
+### 概念
 
-- 测试1
+发布一个版本时，我们通常先在版本库中打一个标签（tag），这样，就唯一确定了打标签时刻的版本。将来无论什么时候，取某个标签的版本，就是把那个打标签的时刻的历史版本取出来。所以，标签也是版本库的一个快照
 
-  场景：Clear
+标签本质上就是指向某个 commit 的指针（跟分支很像，但是分支可以移动，标签不能移动），所以，创建和删除标签都是瞬间完成的
 
-  操作：控制台执行 `git pull` → 弹出 GitHub 的用户名和密码输入框 → 输入后，正常推送和拉取代码
+tag 正如其单词表示的含义，当我们想要表示 `commitid` 为 `9f897e...` 是某某功能完成的时候，就不如给该 commit 打一个 tag
 
-  现象：凭据信息多出一条 `git@https://github.com`，用户名为 `Personal Access Token`
+创建的标签都默认存储在本地，不会自动推送到远程
 
-- 测试2
+### 常用命令
 
-  场景：Clear
+`git tag <tagname>`：为当前分支的最新 commit 添加标签
+`git tag <ragename> <commitid>`：指定的 commit 添加标签
+`git tag [-a] <tagname> [-m "说明文字"] [commitid]`
 
-  操作：SourceTree 执行 `git pull` → 同上
+`git tag`：查看所有 tag（不是按照创建时间排序，而是按照名称排序）
+`git show <tagname>`：查看详细信息
+`git push <远程仓库名> <tagname>`：推送到远程仓库
+`git push <远程仓库名> --tags`：将本地所有尚未推送的标签推送至远程
+`git tag -d <tagname>`：删除
+`git push <远程仓库名> :refs/tags/<tagname>`：删除远程仓库标签
 
-- 测试3
+## 搭建 Git 服务器
 
-  场景：基于上面测试的结果（在 SourceTree 的账户管理中可以看到新增的凭据）
+1. 安装 git
 
-  操作：添加一个账户
+   `sudo apt-get install git`
 
-  现象：上面新增的凭据信息的用户名才被更新成对应的名称，并且新增了两个凭据 `git@用户名https://github.com` 和 `sourcetree-rest:git@用户名https://github.com` 
+2. 创建指定用户来运行 git 服务
 
-- 测试4
+   `useradd git`（创建名为 git 的用户）
 
-  猜测：因为第一步操作新增的凭据，因为名称的优先级问题，导致最上面的测试中，一直是在用另外一个账号进行登录，这当然无法访问
+   `passwd git`（为名为 git 的用户设置密码）
 
-  场景：Clear
+3. 创建证书登录
 
-  操作：新增一个账户
+   收集所有需要登录的用户的公钥，就是他们自己的 `id_rsa.pub` 文件，把所有公钥导入到 `/home/git/.ssh/authorized_keys` 文件里，一行一个
 
-  现象：上面提到的3个凭据，都出现了
+4. 初始化 git 仓库
 
-  再测：将名为 `git@https://github.com` 的凭据删除，拉取代码
+   先选定一个目录作为Git仓库，假定是 `/srv/sample.git`，搭建的命令如下：
 
-  现象：弹出 GitHub 的用户名和密码输入框...
+   `mkdir /srv` → `cd /srv`
 
-- 总结
+   `sudo git init --bare sample.git` → `sudo chown -R git:git sample.git`
+   	Git 就会创建一个裸仓库，裸仓库没有工作区，因为服务器上的 Git 仓库纯粹是为了共享，所以不让用户直接登录到服务器上去改工作区，并且服务器上的Git仓库通常都以 .git 结尾
 
-  结合上面的测试以及 **问题** 的 现象3，暂且得出在 SourceTree 中、以 HTTPS 协议访问 GitHub 的不同仓库，访问那个仓库，就应该将相应的修改默认的凭据
+5. 用户禁用 shell 登录
 
-- 参考资料
+   出于安全考虑，第二步创建的用户不允许登录shell，这可以通过编辑 `/etc/passwd` 文件完成。找到类似下面的一行：`git:x:1001:1001:,,,:/home/git:/bin/bash`
+   改为：`git:x:1001:1001:,,,:/home/git:/usr/bin/git-shell`
+   （这样操作，用户指定 git-shell 一登录就自动退出）
 
-  原文：https://medium.com/@XHama666/about-git-and-github-permission-ssh-and-https-single-account-and-multiple-accounts-13747ca8764e
+   这样，git用户可以正常通过 ssh 使用 git，但无法登录shell
 
-  翻译：https://blog.csdn.net/weixin_26722031/article/details/108136838
+6. 克隆远程仓库
 
-  ---
+   `git clone git@server:/srv/sample.git`
 
-- 火花
+7. 权限管理
 
-  可以在远程仓库的 url 上做文章，就是原理和 SSH 中的区分方式一模一样，例
+   有很多不但视源代码如生命，而且视员工为窃贼的公司，会在版本控制系统里设置一套完善的权限控制，每个人是否有读写权限会精确到每个分支甚至每个目录下。因为 Git 是为 Linux 源代码托管而开发的，所以 Git 也继承了开源社区的精神，不支持权限控制
 
-  ```markdown
-  - 在 GitHub 平台上的两个账户 A 和 B
-  https://github.com/A
-  https://github.com/B
-  
-  - 两个账户都可以访问账户 C 的仓库 c，那么可以通过下边设置远程仓库地址的方式来区分以哪个账户来访问
-  https://A@github.com/C/c
-  https://B@github.com/C/c
-  ```
+   不过，因为 Git 支持钩子（hook），所以，可以在服务器端编写一系列脚本来控制提交等操作，达到权限控制的目的。`Gitolite` 就是这样的工具，像 SVN 那样变态地控制权限，这里也不介绍了，不把有限的生命浪费到权限斗争中
 
-  本以为 https 协议的仓库因本地多账号的冲突已经解决了，实际并没有，实际还是要访问相应账号时，切换访问 github.com 的默认凭据（在 SourceTree 上时切换默认账号）
+## 指针角度释义
 
-## SourceTree
+1. head指针：指向当前的分支（指向分支的指针）
+2. master分支：默认的分支，也是主分支，指针指向目前工作区的节点（指向节点的指针）
+3. 创建分支：创建一个指向 当前head指向的分支指向的节点的 指针
+4. 切换分支：将head指针指向指定的分支
+5. 处于某一分支，修改文件 → 提交到暂存区 → 提交。相当于当前分支指向的节点又引出新的节点，并将分支指向新的节点
+6. 合并：两个相邻的节点各有一个分支指向，将当前head指针指向的时间轴上早的版本库（节点）上的分支指向要合并的分支指向的节点上，head指针依旧指向原来的分支的指针
+7. 解决冲突：例如，基于一个节点引出两个节点，这两个节点各有一个分支指向，解决冲突就是将两个节点合并成一个，具体合并细节和 git 无关，并删除一个分支
+8. 删除分支：删除一个指针
 
-​	SourceTree 本身就是一个 Git GUI，根本还是通过命令来操作的，单独分出一块是因为，SourceTree 是一款比较好用，日常开发用的比较多的工具，有必要好好熟悉一下工具的配置、用法等
-
-**账户管理**
-
-​	方式一：新建一个 Tab 的 ➕ → Remote → 添加一个账户
-
-​	方式二：工具 → 选项 → 验证
-
-**SSH 和 HTTPS**
-
-​	从 SSH 协议说起，就是说通过 SSH 协议访问 GitHub 仓库，走的都是 `.ssh/config` 那一套，所以无论是使用命令还是 SourceTree 效果是一模一样的
-
-​	然后使用的是 HTTPS 协议，参考该[官方文档](https://docs.github.com/en/free-pro-team@latest/github/using-git/caching-your-github-credentials-in-git)，就可以知道 Git 是有提供 `credential helper` 认证信息缓存的相关概念的，SourceTree 中这块内容叫账户。但是，最终它们在 Windows 操作系统上，都是通过凭据管理来体现的
-
-## 其他
-
-1. GitHub accesstoken 的认证方式访问仓库
-
-   其实概念很简单，这里边就是 OAuth 的概念，token 唯一标识账户，且包含着加密信息
-
-   并且同标识本地以哪个账号仓库的方式一样，只要将 token 放到仓库地址的前边就可以了
-
-6. git 有个特殊的配置项
-
-   ```
-   就是说，配置了 url.xxx1.insteadof=xxx2，当你访问 xxx2 的仓库，实际上回去访问 xxx1
-   
-   # 例1
-   url.https://rankingcong:2fb2cb12e6945b548a234e2a35cbc88d7e0b3d8f@github.com/shanghairanking.insteadof=https://github.com/Xxx
-   
-   # 例2
-   url.https://minQie@github.com/minQie.insteadof=https://github.com/minQie
-   
-   配置了，仓库地址将直接被替换，都无法修改的那种（修改了，就又被替换了）
-   ```
-
-7. 补个现象提示，就是说你的 github 账户针对某个仓库没有 write 权限时，你推送分支，会得到仓库没找到的错误...
