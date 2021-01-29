@@ -16,6 +16,10 @@
 
 `git commit -m "提交注释"` 的 提交注释 = message
 
+**分支**
+
+在本文中，说到分支，会有将其类比为指向分支线最新提交的指针的说法
+
 **分支名**
 
 GitHub 在某个时间节点，因种族歧视的缘由，将默认的主分支名由 master 改为了 main，本文的内容都是采用 master
@@ -44,23 +48,27 @@ git 不会跟踪文件夹
 
 通过直接输入 `git config` 命令，可以了解到 git 针对配置项一共有 3 种级别：
 
-`system`：所有用户、所有项目，对应
+`system`：所有用户、所有项目，对应到配置文件
 
 ```
 Linux /etc/gitconfig
 Win   C:\Program Files\Git\mingw64\etc\gitconfig
 ```
 
-`global`：当前登录的用户，对应
+`global`：当前登录的用户，对应到配置文件
 
 ```
 Linux ~/.gitconfig
 Win   C:\Users\xxx\.gitconfig
 ```
 
-`local`：本地级别，也就是具体的某个git仓库，对应 `仓库目录/.git/config`
+`local`：本地级别，也就是具体的某个 git 仓库，对应到配置文件
 
-### 常用命令
+```
+仓库目录/.git（隐藏文件）/config
+```
+
+### 命令语法
 
 查看所有配置：`git config [--local|--global|--system] -list(-l)`
 
@@ -68,19 +76,23 @@ Win   C:\Users\xxx\.gitconfig
 改：`git config <name> <value>`
 删：`git config --unset <name>`
 删：`git config --unset-all <name>`
-查：`git config --get <name>`
+查：`git config [--get] <name>`
 查：`git config --get-all <name>`
 查：`git config get-regexp <name-regex>`
 
 ### 常用配置
 
 语法高亮：`git config --global color.ui true`
+
 配置别名：`git config --global alias.别名 "原名"`（单个单词可以省略引号）
+
 用户名邮箱：
 
-```
+```bash
 git config --global user.name "Your Name"
 git config --global user.email "email@example.com"
+
+# 重点说明一下，这两个配置项相当重要，用于直接标识 commit 的创建者是谁；可能说你通过账号 A 的密钥、密码等权限提交代码，但是只要你这两个配置没有匹配，就会显示成别人提交的代码
 ```
 
 ### 忽略文件
@@ -293,36 +305,6 @@ n次提交：`git reset --<model> HEAD~n`
 
 使用该命令，提交时会产生一个默认 message，推荐使用，不要去修改
 
-### 修改提交注释
-
-`git commit –-amend`
-
-最新一次的提交内容撤回到暂存区；
-进入用户交互（文本编辑）界面，可以修改（i）提交注释；在交互界面，执行保存时（:wq），会将修改后的暂存区内容以及新的注释替换该次的提交
-（想要进行添加、修改文件的修改，经过测试，需要在执行该命令之前做好改动，并且将改动添加到暂存区）
-
-### 修改提交
-
-**方式一**
-
-`git rebase -i <commitid>` 或者 `git rebase <commitid^> --interactive`
-（将HEAD指向 commitid 所在的提交）
-
-假如要修改某提交的注释，上面的 commitid 就是该提交的上一次提交的 commitid
-
-此时进行具体的修改，可以修改提交的注释信息，可以修改提交的文件，还可以合并几次的提交为一次提交（将要被合并的提交前面的头由 `pick` 修改成 `s`，然后保存；每个 `s` 都会从自己开始，向老提交的方向找，找到离自己最近的 `pick` 进行合并，随后又进入一个编辑界面：添加这次合并的注释，即确定合并成的这一次提交的注释）
-
-修改注释前面的头，如 `pick` 修改为 `edit`（改成 `r` 也行）
-
-**方式二**
-
-`git rebase –continue`
-
-当前分支转移至HEAD处，和对应的远程分支分道扬镳，但从分叉处至该分支和对应的远程分支有相同的提交数
-执行这条命令之前，都可以通过 `git rebase --abort` 放弃修改
-
-使用注意：在有远程分支和多人开发的情况下，一定需要慎重，操作不好，可能直接导致他人的提交丢失
-
 ### 提交复制
 
 `git cherry-pick <commitid> ...`
@@ -364,7 +346,9 @@ If you are sure you want to delete it, run 'git branch -D xxx'
 -a：远程分支也查看
 
 `git branch -d <branchname>`：删除分支
-注意：不能删除当前所在的分支，需要切换到别的分支，再删除
+`git push <远程仓库名> :<分支名>`：删除远程仓库的分支（将本地这个删除改动推送到远程）
+注意1：不能删除当前所在的分支，需要切换到别的分支，再删除
+注意2：不能删除远程仓库的默认分支
 
 `git merge <branchname>`：将当前分支合并至指定分支
 大多数 GUI 中，都是将右键点击合并的分支，合并到当前分支
@@ -428,6 +412,83 @@ tag 正如其单词表示的含义，当我们想要表示 `commitid` 为 `9f897
 `git tag -d <tagname>`：删除
 `git push <远程仓库名> :refs/tags/<tagname>`：删除远程仓库标签
 
+## 修改提交（变基）
+
+### 简介
+
+变基的是什么，简单来说就是提供了一个可以修改历史提交的手段，例如，修改提交的 message，修改提交的作者信息（名称、邮箱）；还能删除提交、修改提交等等
+
+**从规范角度来说**，有些公司对代码仓库的提交历史有严格的要求，希望主干分支清晰整洁，呈现出类似一条直线的效果。当然，公司不具有一定规模，或是公司没有自己的产品，又或是没有要求严格的技术负责人，需要通过变基来整改提交历史的寻求根本不存在
+
+**从安全角度来说**，即使你可能真的有修改历史提交信息的小需求，你也会忍耐，而不是选择使用变基的方式去调整修改，因为无关大局。将变基的结果推送到远程仓库，需要加上 `--force`（否则远程仓库会进行 merge 或 rebase 处理，那么提交历史的分支节点展示 UI 就达不到预期的效果了），是类似覆盖的操作，假如同时有其他的开发人员提交了代码，那么提交会丢失，导致很严重的结果
+
+**小结**：所以说，如果公司没有需求，而你自己不是 git 方面的专家，没有在变基之前做好备份还原的操作，没有充足的时间，就不要使用变基的功能。虽然，没法忍耐小错误和不规范，但是这个真的应该考虑成本和后果再做出行动
+
+**官方**：只对尚未推送或分享给别人的本地修改执行变基操作清理历史，从不对已推送至别处的提交执行变基操作，这样，你才能享受到两种方式（rebase 和 merge）带来的便利
+
+### 操作概念
+
+> 在变基之前，git 要求你的工作区没有任何文件改动内容
+
+1. **确定变基范围**
+
+   ​	确定要修改哪几个 commit，可以通过给执行的 `git rebase` 命令加上特定参数执行来指定。指定好后，会进入一个类似 `linux` 中的 vim 查看文本的交互式模式，而文本的内容分两块，第一块是你通过特定参数筛选出的提交，然后是关于你要如何修改历史提交的操作提示，注意这一步对入门者来说有点难理解（但是理解之后，你会发现 git 设计的很妙），这一步的目的是希望你确定对一个 commit 做怎样的操作，如 修改、删除等，确认好后，进行命令模式的 `wq` 文件保存。回过头来说，你可以通过执行 `git rebase` 命令的同时指定参数来筛选 commit，你也完全可以不指定，在 vim 文本时，来指定
+
+2. **进行具体修改**
+
+   ​	根据第一步确认的 commit 范围和做怎样的修改，这里将进行具体的修改，当确认好后，你会进入到变基的交互命令模式。这时你会处于你确定的 commit 列表按时间逆序的第一个，即最早的那一个，你可以通过 `git commit --amend` 命令再进入一个 vim 的文本编辑，文本的内容就是该 commit 的详细信息，你可以对提交的信息进行修改
+
+   ​	同时该 commit 的文件改动内容会出现在你的**暂存区**，此时可以将暂存区撤回进行修改，再提交到暂存区），此时，你就可以对历史提交的内容进行修改了
+
+   ​	通过 `:wq` 修改保存 commit 信息的同时，会以该时刻暂存区内容以及注释替换掉该次提交。当你确认修改好后，可以输入 `git rebase --continue` 对下一个 commit 进行修改，当你在最后一个 commit 上执行该命令，就认为本次变基结束。当进行变基时，head 会脱离跑出去，当变基完成时，head 所在分支的指针就会移动到变基后的最新提交上
+
+   PS：在进行具体修改时执行 `git commit --amend`  命令的 vim 修改提交者信息，也可以用命令的参数形式来替代 `git commit --amend --author="zhangsan <zhangsan@qq.com>" --no-edit`
+
+### 命令
+
+`git rebase --abort`：在变基过程中，想放弃本次变基所作的修改
+
+`git rebase --skip`：在变基过程中，你临时有事，从变基过程中退出来
+
+`git rebase -i <commitid>`：确定 commit 范围为从指定的 commit - 不包括 到当前分支最新的 commit
+
+`git rebase -i HEAD~n `：确定 commit 范围为当前分支最新的 commit - 包括 向历史回溯 n 个
+执行命令有可能得到 `fatal: invalid upstream 'HEAD~n'` 这样的提示，说明你的 n 超过范围了
+
+### 待补充
+
+HEAD 参数规则？
+
+git rebase 命令的其他参数？
+
+-i 参数有无的影响？
+
+真正做到修改历史提交者的信息需要对 commit 的信息了如指掌，此时更推荐使用 `--no-edit` 参数的命令
+
+### 批量修改 commit author
+
+```shell
+#!/bin/sh
+
+git filter-branch --env-filter '
+
+OLD_EMAIL="old@old.com"
+NEW_NAME="new"
+NEW_EMAIL="new@new.new"
+
+if [ "$GIT_COMMITTER_EMAIL" = "$OLD_EMAIL" ]
+then
+	export GIT_COMMITTER_NAME="$NEW_NAME"
+	export GIT_COMMITTER_EMAIL="$NEW_EMAIL"
+fi
+if [ "$GIT_AUTHOR_EMAIL" = "$OLD_EMAIL" ]
+then
+    export GIT_AUTHOR_NAME="$NEW_NAME"
+    export GIT_AUTHOR_EMAIL="$NEW_EMAIL"
+fi
+' --tag-name-filter cat -- --branches --tags
+```
+
 ## 搭建 Git 服务器
 
 1. 安装 git
@@ -473,7 +534,7 @@ tag 正如其单词表示的含义，当我们想要表示 `commitid` 为 `9f897
 
 ## 指针角度释义
 
-1. head指针：指向当前的分支（指向分支的指针）
+1. head指针：head 指向的分支、提交的文件状态，就是 git 使用者能看到的文件状态
 2. master分支：默认的分支，也是主分支，指针指向目前工作区的节点（指向节点的指针）
 3. 创建分支：创建一个指向 当前head指向的分支指向的节点的 指针
 4. 切换分支：将head指针指向指定的分支

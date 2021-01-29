@@ -134,6 +134,18 @@ git@github.com/minQie/xxx.git
   Settings（Personal setting） -> SSH and GPG Keys -> New SSH key -> Title随意、 Key填入公钥
   ```
 
+### AccessToken
+
+其实概念很简单，这里边就是 OAuth 的概念，token 唯一标识账户，且包含着加密信息，并且同标识本地以哪个账号仓库的方式一样，只要将 token 放到仓库地址的前边就可以了
+（GitHub token 配置位置：`Settings` → `Developer settings` → `Personal access tokens`）
+
+git 有个特殊的配置项，就是说，配置了 `url.xxx1.insteadof=xxx2`，当你访问 `xxx2` 的仓库，实际上会去访问 `xxx1`
+（全局配置文件的位置：`C:\Users\用户名\.gitconfig`）
+
+例1：`url.https://minQie:<token>@github.com/minQie.insteadof=https://github.com/minQie`
+
+例2：`url.https://minQie@github.com/minQie.insteadof=https://github.com/minQie`
+
 ## 远程仓库冲突
 
 ​	本篇提到的远程仓库，都是指 GitHub，这里引出 `多` 的概念，就再提一个 Gitee，GitHub 和 Gitee 都是功能比较完善的代码仓库平台，但是，在国内码云的代码拉取和推送速度远大于 GitHub
@@ -303,24 +315,5 @@ git@B.github.com:C/c.git
 
 ## 其他
 
-1. GitHub accesstoken 的认证方式访问仓库
+补个现象提示，就是说你的 GitHub 账户针对某个仓库没有 write 权限时，你推送分支，会得到仓库没找到的错误...
 
-   其实概念很简单，这里边就是 OAuth 的概念，token 唯一标识账户，且包含着加密信息
-
-   并且同标识本地以哪个账号仓库的方式一样，只要将 token 放到仓库地址的前边就可以了
-
-6. git 有个特殊的配置项
-
-   ```markdown
-   就是说，配置了 url.xxx1.insteadof=xxx2，当你访问 xxx2 的仓库，实际上回去访问 xxx1
-   
-   - 例1
-   url.https://minQie:<token>@github.com/minQie.insteadof=https://github.com/minQie
-   
-   - 例2
-   url.https://minQie@github.com/minQie.insteadof=https://github.com/minQie
-   
-   配置了，仓库地址将直接被替换，都无法修改的那种（修改了，就又被替换了）
-   ```
-
-7. 补个现象提示，就是说你的 github 账户针对某个仓库没有 write 权限时，你推送分支，会得到仓库没找到的错误...

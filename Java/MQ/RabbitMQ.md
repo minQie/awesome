@@ -95,9 +95,13 @@ RabbitMQ 3.7 版本新增 RPC 模型
 
 RabbitMQ 3.8 版本新增 Publisher Comfirms 模型
 
-## 6 模型一
+### 模型一
 
 ![img](https://www.rabbitmq.com/img/tutorials/python-one.png)
+
+**自己**
+
+单一生产者，单一消费者
 
 **简介**
 
@@ -117,7 +121,7 @@ RabbitMQ 3.8 版本新增 Publisher Comfirms 模型
 
 4. 创建一个消息接收者（消费者）
 
-   核心方法：启动一个线程监听指定 RabbitMQ Server 的 虚拟主机 的 消息队列中，是否有消息，有就获取并进行消费（类似于 Socket编程 中Server等待接收新连接或者建立连接后任意一端等待消息）
+   核心方法：启动一个线程监听指定 RabbitMQ Server 的 虚拟主机 的 消息队列中，是否有消息，有就获取并进行消费（类似于 Socket 编程中 Server 等待接收新连接或者建立连接后任意一端等待消息）
 
 **具体代码**
 
@@ -127,9 +131,13 @@ RabbitMQ 3.8 版本新增 Publisher Comfirms 模型
 
 ​	如果生产者生产的消息突然暴增，又或是消费者的消费能力下降，导致消息队列中的消息积压，最终可能导致依赖消息队列的业务、服务不可用
 
-## 7 模型二
+### 模型二
 
 ![img](RabbitMQ.assets/python-two.png)
+
+**自己**
+
+一个生产者，多个消费者
 
 **简介**
 
@@ -168,13 +176,17 @@ RabbitMQ 3.8 版本新增 Publisher Comfirms 模型
 
 ​	详见项目中的 `model2`
 
-## 8 模型三
+### 模型三
 
 ![img](RabbitMQ.assets/exchanges.png)
 
+**自己**
+
+交换机 - 广播
+
 **简介**
 
-​	`Publish/Subscribe`，即发布订阅模型，适合如用户注册成功后，需要发送邮件、添加积分、发送短信等的业务场景，注意通过该种方式，一定要先有队列相关的队列绑定到交换机上，否则生产的消息会丢失
+​	`Publish/Subscribe`，即发布订阅模型，适合如用户注册成功后，需要发送邮件、添加积分、发送短信等的业务场景，注意通过该种方式，一定要先有相关的队列绑定到交换机上，否则生产的消息会丢失
 
 **关键点**
 
@@ -192,9 +204,13 @@ RabbitMQ 3.8 版本新增 Publisher Comfirms 模型
 
 ​	详见项目中的 `model3`
 
-## 9 模型四
+### 模型四
 
 ![img](RabbitMQ.assets/python-four.png)
+
+**自己**
+
+交换机 - 消息路由
 
 **简介**
 
@@ -216,9 +232,13 @@ RabbitMQ 3.8 版本新增 Publisher Comfirms 模型
 
 ​	详见项目中的 `model4`
 
-## 10 模型五
+### 模型五
 
 ![img](RabbitMQ.assets/python-five.png)
+
+**自己**
+
+交换机 - 带有类正则的消息路由
 
 **简介**
 
@@ -242,15 +262,15 @@ RabbitMQ 3.8 版本新增 Publisher Comfirms 模型
 
 ​	详见项目中的 `model5`
 
-## 11 模型六
+### 模型六
 
 ​	[RPC](https://www.rabbitmq.com/tutorials/tutorial-six-python.html)
 
-## 12 模型七
+### 模型七
 
 ​	[Publisher Confirms](https://www.rabbitmq.com/tutorials/tutorial-seven-java.html)
 
-## 13 集成 Springboot
+## 6 集成 Springboot
 
 **依赖**
 
@@ -285,7 +305,7 @@ spring:
 
 ​	详见 `mine` 项目中的 `test` 目录下
 
-## 14 集群架构
+## 7 集群架构
 
 > 官方文档：文档 → 向下翻到 Distributed RabbitMQ
 
